@@ -74,11 +74,11 @@ trait HasComplexHeaders
         $headersColumns = $this->complexHeaders = $this->columns = [];
 
         foreach ($originalHeaders as $header) {
-            $headersColumns = array_merge(
-                $headersColumns,
-                $tmp = $header->getColumnNames()->toArray()
-            );
-            foreach ($tmp as &$name) {
+            $columnNames = $header->getColumnNames();
+            
+            // 直接使用Collection，避免转换为数组和重复的array_merge
+            foreach ($columnNames as $name) {
+                $headersColumns[] = $name;
                 if ($column = $originalColumns->get($name)) {
                     $this->columns[$name] = $column;
                 }

@@ -123,7 +123,8 @@ trait HasFields
         foreach ($this->fields() as $field) {
             if ($field instanceof FieldsCollection) {
                 /** @var Field $field */
-                $fields = array_merge($fields, $field->mergedFields());
+                // 使用array_push和展开运算符，避免重复的array_merge调用
+                array_push($fields, ...$field->mergedFields());
             } else {
                 $fields[] = $field;
             }

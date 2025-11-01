@@ -763,13 +763,20 @@ class Helper
 
         foreach ($relations as $first => $v) {
             if (isset($input[$first])) {
-                foreach ($input[$first] as $key => $value) {
+                $firstValue = $input[$first];
+                
+                // 先处理数组值
+                foreach ($firstValue as $key => $value) {
                     if (is_array($value)) {
                         $input["$first.$key"] = $value;
                     }
                 }
 
-                $input = array_merge($input, Arr::dot([$first => $input[$first]]));
+                // 使用Arr::dot展开并直接赋值，避免array_merge
+                $dotted = Arr::dot([$first => $firstValue]);
+                foreach ($dotted as $dottedKey => $dottedValue) {
+                    $input[$dottedKey] = $dottedValue;
+                }
             }
         }
     }
@@ -896,10 +903,12 @@ class Helper
         }
 
         $keys = explode('.', $key);
-        $default = null;
+        $keysCount = count($keys);
 
-        while (count($keys) > 1) {
+        // 缓存count()结果，避免在循环中重复调用
+        while ($keysCount > 1) {
             $key = array_shift($keys);
+            $keysCount--;
 
             if (! isset($array[$key]) || (! is_array($array[$key]) && ! $array[$key] instanceof \ArrayAccess)) {
                 $array[$key] = [];

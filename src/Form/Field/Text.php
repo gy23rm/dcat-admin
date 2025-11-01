@@ -161,16 +161,18 @@ JS
         $original = [];
         $toReplace = [];
 
-        foreach ($options as $key => &$value) {
+        foreach ($options as $key => $value) {
             if (is_array($value)) {
                 $subArray = $this->formatOptions($value);
-                $value = $subArray['options'];
-                $original = array_merge($original, $subArray['original']);
-                $toReplace = array_merge($toReplace, $subArray['toReplace']);
+                $options[$key] = $subArray['options'];
+                
+                // 使用array_push和展开运算符，避免重复的array_merge
+                array_push($original, ...$subArray['original']);
+                array_push($toReplace, ...$subArray['toReplace']);
             } elseif (preg_match('/function.*?/', $value)) {
                 $original[] = $value;
-                $value = "%{$key}%";
-                $toReplace[] = "\"{$value}\"";
+                $options[$key] = "%{$key}%";
+                $toReplace[] = "\"%{$key}%\"";
             }
         }
 

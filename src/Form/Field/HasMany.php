@@ -154,15 +154,9 @@ class HasMany extends Field
                 $rules[$column] = $fieldRules;
             }
 
-            $attributes = array_merge(
-                $attributes,
-                $this->formatValidationAttribute($input, $field->label(), $column)
-            );
+            $attributes += $this->formatValidationAttribute($input, $field->label(), $column);
 
-            $messages = array_merge(
-                $messages,
-                $this->formatValidationMessages($input, $field->getValidationMessages())
-            );
+            $messages += $this->formatValidationMessages($input, $field->getValidationMessages());
         }
 
         Arr::forget($rules, NestedForm::REMOVE_FLAG_NAME);

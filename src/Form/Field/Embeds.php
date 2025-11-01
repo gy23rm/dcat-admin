@@ -125,15 +125,9 @@ class Embeds extends Field implements FieldsCollection
              *     'extra.end_atend' => "$label[end_at]"
              * ]
              */
-            $attributes = array_merge(
-                $attributes,
-                $this->formatValidationAttribute($input, $field->label(), $column)
-            );
+            $attributes += $this->formatValidationAttribute($input, $field->label(), $column);
 
-            $messages = array_merge(
-                $messages,
-                $this->formatValidationMessages($input, $field->getValidationMessages())
-            );
+            $messages += $this->formatValidationMessages($input, $field->getValidationMessages());
         }
 
         if (empty($rules)) {
