@@ -65,11 +65,14 @@ class Zip extends ZipArchive
      */
     public static function extract($source, $destination, $options = [])
     {
-        extract(array_merge([
+        // 使用数组访问代替extract()，避免变量污染的安全风险
+        $options = array_merge([
             'mask' => 0777,
-        ], $options));
+        ], $options);
 
-        if (file_exists($destination) || mkdir($destination, $mask, true)) {
+        $mask = $options['mask'];
+
+        if (mkdir($destination, $mask, true) || is_dir($destination)) {
             $zip = new ZipArchive;
             if ($zip->open($source) === true) {
                 $zip->extractTo($destination);
@@ -133,12 +136,17 @@ class Zip extends ZipArchive
             $source = implode('/', [dirname($source), Helper::basename($source), $wildcard]);
         }
 
-        extract(array_merge([
+        // 使用数组访问代替extract()，避免变量污染的安全风险
+        $options = array_merge([
             'recursive' => true,
             'includeHidden' => false,
             'basedir' => dirname($source),
             'baseglob' => Helper::basename($source),
-        ], $options));
+        ], $options);
+
+        $recursive = $options['recursive'];
+        $basedir = $options['basedir'];
+        $baseglob = $options['baseglob'];
 
         if (is_file($source)) {
             $files = [$source];
