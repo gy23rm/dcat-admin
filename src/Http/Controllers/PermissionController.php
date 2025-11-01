@@ -46,7 +46,7 @@ class PermissionController extends AdminController
                 $max = 3;
                 if (count($path) > $max) {
                     $path = array_slice($path, 0, $max);
-                    array_push($path, '...');
+                    $path[] = '...';
                 }
 
                 $method = $branch['http_method'] ?: [];

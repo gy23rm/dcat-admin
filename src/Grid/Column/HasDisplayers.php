@@ -167,7 +167,7 @@ trait HasDisplayers
             }
 
             if (is_array($v)) {
-                array_push($v, $val);
+                $v[] = $val;
 
                 return $v;
             } elseif ($v instanceof Collection) {

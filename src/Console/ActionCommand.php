@@ -131,10 +131,10 @@ class ActionCommand extends GeneratorCommand
 
         $segments = explode('\\', config('admin.route.namespace'));
         array_pop($segments);
-        array_push($segments, 'Actions');
+        $segments[] = 'Actions';
 
         if (isset($this->namespaceMap[$this->choice])) {
-            array_push($segments, $this->namespaceMap[$this->choice]);
+            $segments[] = $this->namespaceMap[$this->choice];
         }
 
         return implode('\\', $segments);
