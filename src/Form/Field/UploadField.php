@@ -312,7 +312,7 @@ trait UploadField
      */
     protected function generateUniqueName(UploadedFile $file)
     {
-        return md5(uniqid()).'.'.$file->getClientOriginalExtension();
+        return md5(uniqid('', true)).'.'.$file->getClientOriginalExtension();
     }
 
     /**

@@ -764,7 +764,7 @@ class Helper
         foreach ($relations as $first => $v) {
             if (isset($input[$first])) {
                 $firstValue = $input[$first];
-                
+
                 // 先处理数组值
                 foreach ($firstValue as $key => $value) {
                     if (is_array($value)) {
@@ -843,10 +843,10 @@ class Helper
         }
         if (is_array($item)) {
             array_walk_recursive($item, function (&$value) {
-                $value = htmlentities($value ?? '');
+                $value = htmlentities($value ?? '', ENT_QUOTES | ENT_HTML5);
             });
         } else {
-            $item = htmlentities($item ?? '');
+            $item = htmlentities($item ?? '', ENT_QUOTES | ENT_HTML5);
         }
 
         return $item;

@@ -410,10 +410,10 @@ HTML;
             $content = is_string($value) ? json_decode($value, true) : $value;
             if (is_array($content)) {
                 array_walk($content, function (&$v, $k) {
-                    $v = htmlspecialchars($v);
+                    $v = htmlspecialchars($v, ENT_QUOTES | ENT_HTML5);
                 });
             } else {
-                $content = htmlspecialchars($content);
+                $content = htmlspecialchars($content, ENT_QUOTES | ENT_HTML5);
             }
             $field->wrap(false);
 

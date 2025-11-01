@@ -24,7 +24,7 @@ class EditorMDController
 
     protected function generateNewName(UploadedFile $file)
     {
-        return uniqid(md5($file->getClientOriginalName())).'.'.$file->getClientOriginalExtension();
+        return uniqid(md5($file->getClientOriginalName()), true).'.'.$file->getClientOriginalExtension();
     }
 
     /**
