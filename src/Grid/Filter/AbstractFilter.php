@@ -559,9 +559,7 @@ abstract class AbstractFilter
             return;
         }
 
-        $column = explode('.', $this->column);
-
-        if (count($column) == 1) {
+        if (!str_contains($this->column, '.')) {
             return [$this->query => &$params];
         }
 
