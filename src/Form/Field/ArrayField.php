@@ -31,7 +31,8 @@ class ArrayField extends HasMany
 
         foreach (Helper::array($this->value()) as $key => $data) {
             if (isset($data['pivot'])) {
-                $data = array_merge($data, $data['pivot']);
+                // 使用展开运算符替代 array_merge，性能更优
+                $data = [...$data, ...$data['pivot']];
             }
 
             $forms[$key] = $this->buildNestedForm($key)->fill($data);
