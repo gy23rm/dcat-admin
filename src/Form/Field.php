@@ -601,7 +601,7 @@ class Field implements Renderable
             if ($this->default instanceof \Closure) {
                 $this->default->bindTo($this->data());
 
-                return call_user_func($this->default, $this->form);
+                return ($this->default)($this->form);
             }
 
             return $this->default;

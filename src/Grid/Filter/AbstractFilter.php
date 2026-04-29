@@ -586,7 +586,7 @@ abstract class AbstractFilter
             $relColumn = is_string($relColumn) ? $q->getModel()->getTable().'.'.$relColumn : $relColumn;
             array_unshift($params, $relColumn);
 
-            call_user_func_array([$q, $this->query], $params);
+            $q->{$this->query}(...$params);
         }]];
     }
 

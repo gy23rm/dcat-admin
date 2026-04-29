@@ -71,7 +71,7 @@ class Permission
             throw new RuntimeException("Invalid permission method [$method].");
         }
 
-        call_user_func_array([Checker::class, $method], [$args]);
+        Checker::$method($args);
 
         return true;
     }

@@ -169,7 +169,7 @@ JS
                 // 使用array_push和展开运算符，避免重复的array_merge
                 array_push($original, ...$subArray['original']);
                 array_push($toReplace, ...$subArray['toReplace']);
-            } elseif (preg_match('/function.*?/', $value)) {
+            } elseif (str_contains($value, 'function')) {
                 $original[] = $value;
                 $options[$key] = "%{$key}%";
                 $toReplace[] = "\"%{$key}%\"";

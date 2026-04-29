@@ -87,7 +87,7 @@ class Relation extends Field
 
     protected function build()
     {
-        $view = call_user_func($this->builder, $this->model);
+        $view = ($this->builder)($this->model);
 
         if ($view instanceof Show) {
             $view->panel()->title($this->title);

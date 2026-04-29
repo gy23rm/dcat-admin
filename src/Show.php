@@ -653,7 +653,7 @@ class Show implements Renderable
         $model = $this->model();
 
         if (is_callable($this->builder)) {
-            call_user_func($this->builder, $this);
+            ($this->builder)($this);
         }
 
         if ($this->fields->isEmpty()) {

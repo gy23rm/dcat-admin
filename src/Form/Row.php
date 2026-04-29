@@ -116,7 +116,7 @@ class Row implements Renderable
 
         $this->form = $form;
 
-        call_user_func($this->callback, $this);
+        ($this->callback)($this);
     }
 
     /**

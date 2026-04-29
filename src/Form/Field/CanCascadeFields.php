@@ -224,22 +224,17 @@ JS;
      */
     protected function getFormFrontValue()
     {
-        switch (get_class($this)) {
-            case Select::class:
-            case MultipleSelect::class:
-                return 'var checked = $(this).val();';
-            case Radio::class:
-                return <<<'JS'
+        return match (get_class($this)) {
+            Select::class, MultipleSelect::class => 'var checked = $(this).val();',
+            Radio::class => <<<'JS'
 var checked = $(this).closest('.form-group').find(':checked').val();
-JS;
-            case Checkbox::class:
-                return <<<'JS'
+JS,
+            Checkbox::class => <<<'JS'
 var checked = $this.closest('.form-group').find(':checked').map(function(){
   return $(this).val();
 }).get();
-JS;
-            default:
-                throw new RuntimeException('Invalid form field type');
-        }
+JS,
+            default => throw new RuntimeException('Invalid form field type'),
+        };
     }
 }

@@ -1564,7 +1564,7 @@ class Form implements Renderable
      */
     public function footer(Closure $callback)
     {
-        call_user_func($callback, $this->builder->footer());
+        $callback($this->builder->footer());
 
         return $this;
     }

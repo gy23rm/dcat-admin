@@ -242,7 +242,7 @@ class Select extends Field
         if ($this->options instanceof \Closure) {
             $this->options = $this->options->bindTo($this->values());
 
-            $this->options(call_user_func($this->options, $this->value(), $this));
+            $this->options(($this->options)($this->value(), $this));
         }
 
         $this->options = array_filter($this->options, 'strlen');

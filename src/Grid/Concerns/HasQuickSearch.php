@@ -110,7 +110,7 @@ trait HasQuickSearch
 
         if ($this->search instanceof \Closure) {
             return $this->model()->where(function ($q) use ($query) {
-                return call_user_func($this->search, $q, $query);
+                return ($this->search)($q, $query);
             });
         }
 

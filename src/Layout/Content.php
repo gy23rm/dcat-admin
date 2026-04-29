@@ -216,7 +216,7 @@ class Content implements Renderable
     {
         if ($content instanceof Closure) {
             $row = new Row();
-            call_user_func($content, $row);
+            $content($row);
             $this->addRow($row);
         } else {
             $this->addRow(new Row($content));
@@ -233,7 +233,7 @@ class Content implements Renderable
     {
         if ($content instanceof Closure) {
             $row = new Row();
-            call_user_func($content, $row);
+            $content($row);
             $this->prependRow($row);
         } else {
             $this->prependRow(new Row($content));
