@@ -498,7 +498,7 @@ class Asset
             $path = config('admin.assets_server').'/'.trim($path, '/');
         }
 
-        return asset($path, config('admin.https'));
+        return (config('admin.https') || config('admin.secure')) ? secure_asset($path) : asset($path);
     }
 
     /**

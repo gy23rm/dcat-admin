@@ -107,11 +107,10 @@ return [
     'assets_server' => env('ADMIN_ASSETS_SERVER'),
 
     /**
-     * @deprecated 不再建议使用此配置，如果你使用了反向代理，配置好了 `app/Http/Middleware/TrustProxies.php` 中的 $proxies 属性
-     *             你的页面就会自动配置 https 协议。
-     *              未来将完全移除此配置
+     * @deprecated 不再建议使用此配置。如果你使用了反向代理，配置好 `app/Http/Middleware/TrustProxies.php` 中的 $proxies 属性，
+     *             页面就会自动使用 https 协议。未来将完全移除此配置。
      */
-    // 'https' => env('ADMIN_HTTPS'),
+    'https' => env('ADMIN_HTTPS', false),
 
     /*
     |--------------------------------------------------------------------------

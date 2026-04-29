@@ -111,6 +111,10 @@ return [
     |
     | If your page is going to be accessed via https, set it to `true`.
     |
+    | @deprecated 不再建议使用此配置。如果你使用了反向代理，配置好
+    |             `app/Http/Middleware/TrustProxies.php` 中的 $proxies 属性，
+    |             页面就会自动使用 https 协议。未来将完全移除此配置。
+    |
     */
     'https' => env('ADMIN_HTTPS', false),
 
