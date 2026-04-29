@@ -20,7 +20,7 @@ trait HasQuickCreate
     {
         $this->quickCreate = new QuickCreate($this);
 
-        call_user_func($callback, $this->quickCreate);
+        $callback($this->quickCreate);
 
         return $this;
     }

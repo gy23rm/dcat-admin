@@ -127,13 +127,10 @@ class ExportSeedCommand extends Command
      */
     protected function varExport($var, $indent = '')
     {
-        switch (gettype($var)) {
-
-            case 'string':
-                return '"'.addcslashes($var, "\\\$\"\r\n\t\v\f").'"';
-
-            case 'array':
-                $indexed = array_keys($var) === range(0, count($var) - 1);
+        return match (gettype($var)) {
+            'string' => '"'.addcslashes($var, "\\\$\"\r\n\t\v\f").'"',
+            'array' => (function () use ($var, $indent) {
+                $indexed = array_is_list($var);
 
                 $r = [];
 
@@ -144,16 +141,10 @@ class ExportSeedCommand extends Command
                 }
 
                 return "[\n".implode(",\n", $r)."\n".$indent.']';
-
-            case 'boolean':
-                return $var ? 'true' : 'false';
-
-            case 'integer':
-            case 'double':
-                return $var;
-
-            default:
-                return var_export($var, true);
-        }
+            })(),
+            'boolean' => $var ? 'true' : 'false',
+            'integer', 'double' => $var,
+            default => var_export($var, true),
+        };
     }
 }

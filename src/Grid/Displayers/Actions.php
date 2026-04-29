@@ -54,7 +54,7 @@ class Actions extends AbstractDisplayer
     {
         $this->prepareAction($action);
 
-        array_push($this->appends, $action);
+        $this->appends[] = $action;
 
         return $this;
     }
@@ -229,7 +229,7 @@ class Actions extends AbstractDisplayer
         foreach ($this->actions as $action => $enable) {
             if ($enable) {
                 $method = 'render'.ucfirst($action);
-                array_push($prepends, $this->{$method}());
+                $prepends[] = $this->{$method}();
             }
         }
 

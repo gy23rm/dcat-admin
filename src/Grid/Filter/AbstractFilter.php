@@ -559,9 +559,7 @@ abstract class AbstractFilter
             return;
         }
 
-        $column = explode('.', $this->column);
-
-        if (count($column) == 1) {
+        if (!str_contains($this->column, '.')) {
             return [$this->query => &$params];
         }
 
@@ -588,7 +586,7 @@ abstract class AbstractFilter
             $relColumn = is_string($relColumn) ? $q->getModel()->getTable().'.'.$relColumn : $relColumn;
             array_unshift($params, $relColumn);
 
-            call_user_func_array([$q, $this->query], $params);
+            $q->{$this->query}(...$params);
         }]];
     }
 

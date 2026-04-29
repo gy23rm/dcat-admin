@@ -139,16 +139,16 @@ class DatabaseUpdater
             // Prefix and suffix string to prevent unterminated comment warning
             $tokens = token_get_all('/**/'.$buffer.'/**/');
 
-            if (strpos($buffer, '{') === false) {
+            if (!str_contains($buffer, '{')) {
                 continue;
             }
 
-            for (; $i < count($tokens); $i++) {
+            for ($iMax = count($tokens); $i < $iMax; $i++) {
                 /*
                  * Namespace opening
                  */
                 if ($tokens[$i][0] === T_NAMESPACE) {
-                    for ($j = $i + 1; $j < count($tokens); $j++) {
+                    for ($j = $i + 1, $jMax = count($tokens); $j < $jMax; $j++) {
                         if ($tokens[$j] === ';') {
                             break;
                         }

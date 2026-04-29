@@ -57,7 +57,7 @@ trait HasFilter
             return $this->filter;
         }
 
-        call_user_func($callback, $this->filter);
+        $callback($this->filter);
 
         return $this;
     }

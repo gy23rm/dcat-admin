@@ -28,7 +28,7 @@ trait HasSelector
 
         $this->_selector = new Selector($this);
 
-        call_user_func($closure, $this->_selector);
+        $closure($this->_selector);
 
         $this->header(function () {
             return $this->renderSelector();
@@ -65,7 +65,7 @@ trait HasSelector
             }
 
             if ($selector['query']) {
-                call_user_func($selector['query'], $this->model(), $values);
+                ($selector['query'])($this->model(), $values);
 
                 return;
             }

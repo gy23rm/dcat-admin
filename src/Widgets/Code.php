@@ -96,7 +96,7 @@ class Code extends Markdown
             }
 
             if ($line >= $start) {
-                $source .= htmlspecialchars($row, ENT_NOQUOTES, config('charset', 'utf-8'));
+                $source .= htmlspecialchars($row, ENT_QUOTES | ENT_HTML5, config('charset', 'utf-8'));
             }
         }
 

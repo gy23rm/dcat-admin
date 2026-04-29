@@ -80,7 +80,7 @@ class JavaScript
         foreach (static::all() as $id => $script) {
             $id = "\"$id\"";
 
-            if (mb_strpos($value, $id) !== false) {
+            if (str_contains($value, $id)) {
                 $value = str_replace($id, $script, $value);
 
                 static::delete($id);

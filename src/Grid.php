@@ -509,7 +509,7 @@ class Grid
     public function callBuilder()
     {
         if ($this->builder && ! $this->built) {
-            call_user_func($this->builder, $this);
+            ($this->builder)($this);
         }
 
         $this->built = true;

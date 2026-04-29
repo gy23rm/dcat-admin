@@ -787,7 +787,7 @@ class EloquentRepository extends Repository implements TreeRepository
                 continue;
             }
 
-            $relation = call_user_func([$model, $relationColumn]);
+            $relation = $model->$relationColumn();
 
             if ($relation instanceof Relations\Relation) {
                 $relations[$column] = $value;

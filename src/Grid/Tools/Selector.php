@@ -187,7 +187,7 @@ class Selector
             if ($add) {
                 $options = [];
             }
-            array_push($options, $value);
+            $options[] = $value;
         }
 
         if (! empty($options)) {

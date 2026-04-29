@@ -411,7 +411,7 @@ class HasMany extends Field
 
         $form->setResolvingFieldCallbacks($this->resolvingFieldCallbacks);
 
-        call_user_func($this->builder, $form);
+        ($this->builder)($form);
 
         $hidden[] = $form->hidden($this->getKeyName());
         $hidden[] = $form->hidden(NestedForm::REMOVE_FLAG_NAME)->default(0)->addElementClass(NestedForm::REMOVE_FLAG_CLASS);

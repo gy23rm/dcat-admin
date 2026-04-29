@@ -42,13 +42,13 @@ class Administrator extends EloquentRepository
 
         if (! $permissions->isEmpty()) {
             $items = $items->map(function ($v) use ($roleKeyName, $permissions) {
-                $v['permissions'] = [];
+                $allPermissions = [];
 
                 foreach ($v['roles']->pluck($roleKeyName) as $roleId) {
-                    $v['permissions'] = array_merge($v['permissions'], $permissions->get($roleId, []));
+                    $allPermissions[] = $permissions->get($roleId, []);
                 }
 
-                $v['permissions'] = array_unique($v['permissions']);
+                $v['permissions'] = array_unique($allPermissions ? array_merge(...$allPermissions) : []);
 
                 return $v;
             });

@@ -151,7 +151,7 @@ class Helper
             $element = '';
 
             if ($value !== null) {
-                $element = $key.'="'.htmlentities($value, ENT_QUOTES, 'UTF-8').'" ';
+                $element = $key.'="'.htmlentities($value, ENT_QUOTES | ENT_HTML5, 'UTF-8').'" ';
             }
 
             $html .= $element;
@@ -446,7 +446,7 @@ class Helper
 
         $hasPrefix = false;
 
-        if (mb_strpos($color, '#') === 0) {
+        if (str_starts_with($color, '#')) {
             $color = mb_substr($color, 1);
 
             $hasPrefix = true;
@@ -482,7 +482,7 @@ class Helper
             return $color;
         }
 
-        if (mb_strpos($color, '#') === 0) {
+        if (str_starts_with($color, '#')) {
             $color = mb_substr($color, 1);
         }
 
@@ -579,7 +579,7 @@ class Helper
      */
     public static function isQQBrowser()
     {
-        return mb_strpos(mb_strtolower($_SERVER['HTTP_USER_AGENT'] ?? ''), 'qqbrowser') !== false;
+        return str_contains(mb_strtolower($_SERVER['HTTP_USER_AGENT'] ?? ''), 'qqbrowser');
     }
 
     /**
@@ -763,13 +763,20 @@ class Helper
 
         foreach ($relations as $first => $v) {
             if (isset($input[$first])) {
-                foreach ($input[$first] as $key => $value) {
+                $firstValue = $input[$first];
+
+                // 先处理数组值
+                foreach ($firstValue as $key => $value) {
                     if (is_array($value)) {
                         $input["$first.$key"] = $value;
                     }
                 }
 
-                $input = array_merge($input, Arr::dot([$first => $input[$first]]));
+                // 使用Arr::dot展开并直接赋值，避免array_merge
+                $dotted = Arr::dot([$first => $firstValue]);
+                foreach ($dotted as $dottedKey => $dottedValue) {
+                    $input[$dottedKey] = $dottedValue;
+                }
             }
         }
     }
@@ -836,10 +843,10 @@ class Helper
         }
         if (is_array($item)) {
             array_walk_recursive($item, function (&$value) {
-                $value = htmlentities($value ?? '');
+                $value = htmlentities($value ?? '', ENT_QUOTES | ENT_HTML5);
             });
         } else {
-            $item = htmlentities($item ?? '');
+            $item = htmlentities($item ?? '', ENT_QUOTES | ENT_HTML5);
         }
 
         return $item;
@@ -896,10 +903,12 @@ class Helper
         }
 
         $keys = explode('.', $key);
-        $default = null;
+        $keysCount = count($keys);
 
-        while (count($keys) > 1) {
+        // 缓存count()结果，避免在循环中重复调用
+        while ($keysCount > 1) {
             $key = array_shift($keys);
+            $keysCount--;
 
             if (! isset($array[$key]) || (! is_array($array[$key]) && ! $array[$key] instanceof \ArrayAccess)) {
                 $array[$key] = [];

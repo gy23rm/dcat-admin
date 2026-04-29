@@ -31,7 +31,8 @@ class ArrayField extends HasMany
 
         foreach (Helper::array($this->value()) as $key => $data) {
             if (isset($data['pivot'])) {
-                $data = array_merge($data, $data['pivot']);
+                // 使用展开运算符替代 array_merge，性能更优
+                $data = [...$data, ...$data['pivot']];
             }
 
             $forms[$key] = $this->buildNestedForm($key)->fill($data);
@@ -66,7 +67,7 @@ class ArrayField extends HasMany
 
         $form->setResolvingFieldCallbacks($this->resolvingFieldCallbacks);
 
-        call_user_func($this->builder, $form);
+        ($this->builder)($form);
 
         $hidden = $form->hidden(NestedForm::REMOVE_FLAG_NAME)->default(0)->addElementClass(NestedForm::REMOVE_FLAG_CLASS);
 

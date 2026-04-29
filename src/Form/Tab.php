@@ -57,7 +57,7 @@ class Tab
      */
     public function append($title, \Closure $content, bool $active = false, ?string $id = null)
     {
-        call_user_func($content, $this->form);
+        $content($this->form);
 
         $fields = $this->collectFields();
         $layout = $this->collectColumnLayout();

@@ -24,8 +24,8 @@ class In extends Filter
         $this->options = $options;
 
         $this->class = [
-            'all'  => uniqid('column-filter-all-'),
-            'item' => uniqid('column-filter-item-'),
+            'all'  => uniqid('column-filter-all-', true),
+            'item' => uniqid('column-filter-item-', true),
         ];
     }
 

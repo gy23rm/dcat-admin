@@ -54,7 +54,7 @@ class Actions implements Renderable
     {
         $this->prepareAction($action);
 
-        array_push($this->appends, $action);
+        $this->appends[] = $action;
 
         return $this;
     }

@@ -307,7 +307,7 @@ class Asset
             return $this->getAlias($name);
         }
 
-        if (mb_strpos($name, '@') !== 0) {
+        if (!str_starts_with($name, '@')) {
             $name = '@'.$name;
         }
 
@@ -323,7 +323,7 @@ class Asset
      */
     public function getAlias($name, array $params = [])
     {
-        if (mb_strpos($name, '@') !== 0) {
+        if (!str_starts_with($name, '@')) {
             $name = '@'.$name;
         }
 
@@ -362,7 +362,7 @@ class Asset
         }
 
         return array_filter($files, function ($file) {
-            return ! mb_strpos($file, '{');
+            return !str_starts_with($file, '{');
         });
     }
 
@@ -494,7 +494,7 @@ class Asset
 
         $path = $this->getRealPath($path);
 
-        if (mb_strpos($path, '//') === false) {
+        if (!str_contains($path, '//')) {
             $path = config('admin.assets_server').'/'.trim($path, '/');
         }
 
@@ -558,7 +558,7 @@ class Asset
      */
     protected function containsAlias($value)
     {
-        return $value && mb_strpos($value, '@') === 0;
+        return $value && str_starts_with($value, '@');
     }
 
     /**

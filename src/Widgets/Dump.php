@@ -78,8 +78,8 @@ class Dump extends Widget
         if (
             is_string($content) &&
             (
-                (mb_strpos($content, '{') === 0 && mb_strpos($content, '}', -1) !== false) ||
-                (mb_strpos($content, '[') === 0 && mb_strpos($content, ']', -1) !== false)
+                (str_starts_with($content, '{') && str_ends_with($content, '}')) ||
+                (str_starts_with($content, '[') && str_ends_with($content, ']'))
             )
         ) {
             return json_decode($content, true);

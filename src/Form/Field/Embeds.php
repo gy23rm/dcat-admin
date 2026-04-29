@@ -251,7 +251,7 @@ class Embeds extends Field implements FieldsCollection
 
         $form->setResolvingFieldCallbacks($this->resolvingFieldCallbacks);
 
-        call_user_func($this->builder, $form);
+        ($this->builder)($form);
 
         $form->fill($this->getEmbeddedData());
 

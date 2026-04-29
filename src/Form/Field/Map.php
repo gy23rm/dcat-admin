@@ -29,23 +29,13 @@ class Map extends Field
     {
         $keys = config('admin.map.keys');
 
-        switch (static::getUsingMap()) {
-            case 'tencent':
-                $js = '//map.qq.com/api/js?v=2.exp&key='.($keys['tencent'] ?? env('TENCENT_MAP_API_KEY'));
-                break;
-            case 'google':
-                $js = '//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&key='.($keys['google'] ?? env('GOOGLE_API_KEY'));
-                break;
-            case 'yandex':
-                $js = '//api-maps.yandex.ru/2.1/?lang=ru_RU';
-                break;
-            case 'amap':
-                $js = '//webapi.amap.com/maps?v=1.4.15&plugin=AMap.Autocomplete,AMap.PlaceSearch,AMap.Geolocation&key='.($keys['amap'] ?? env('AMAP_API_KEY'));
-                break;
-            case 'baidu':
-            default:
-                $js = '//api.map.baidu.com/api?v=2.0&ak='.($keys['baidu'] ?? env('BAIDU_MAP_API_KEY'));
-        }
+        $js = match (static::getUsingMap()) {
+            'tencent' => '//map.qq.com/api/js?v=2.exp&key='.($keys['tencent'] ?? env('TENCENT_MAP_API_KEY')),
+            'google' => '//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&key='.($keys['google'] ?? env('GOOGLE_API_KEY')),
+            'yandex' => '//api-maps.yandex.ru/2.1/?lang=ru_RU',
+            'amap' => '//webapi.amap.com/maps?v=1.4.15&plugin=AMap.Autocomplete,AMap.PlaceSearch,AMap.Geolocation&key='.($keys['amap'] ?? env('AMAP_API_KEY')),
+            default => '//api.map.baidu.com/api?v=2.0&ak='.($keys['baidu'] ?? env('BAIDU_MAP_API_KEY')),
+        };
 
         Admin::js($js);
     }
@@ -63,23 +53,13 @@ class Map extends Field
          * Google map is blocked in mainland China
          * people in China can use Tencent map instead(;
          */
-        switch (static::getUsingMap()) {
-            case 'tencent':
-                $this->tencent();
-                break;
-            case 'google':
-                $this->google();
-                break;
-            case 'yandex':
-                $this->yandex();
-                break;
-            case 'amap':
-                $this->amap();
-                break;
-            case 'baidu':
-            default:
-                $this->baidu();
-        }
+        match (static::getUsingMap()) {
+            'tencent' => $this->tencent(),
+            'google' => $this->google(),
+            'yandex' => $this->yandex(),
+            'amap' => $this->amap(),
+            default => $this->baidu(),
+        };
     }
 
     public function height(string $height)

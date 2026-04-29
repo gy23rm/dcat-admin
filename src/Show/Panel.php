@@ -168,7 +168,7 @@ class Panel implements Renderable
             return $this->variables['tools'];
         }
 
-        call_user_func($callable, $this->variables['tools']);
+        $callable($this->variables['tools']);
     }
 
     /**

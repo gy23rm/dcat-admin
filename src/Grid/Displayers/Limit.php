@@ -32,7 +32,7 @@ JS;
 
             $value = array_slice($value, 0, $limit);
 
-            array_push($value, $end);
+            $value[] = $end;
 
             return $value;
         }

@@ -340,7 +340,7 @@ JS;
 
         $this->on('show.bs.modal', <<<JS
 body.html('<div style="min-height:150px"></div>').loading();
-        
+
 setTimeout(function () {
     target.trigger('{$this->target}:load')
 }, {$this->delay});
@@ -415,8 +415,8 @@ HTML;
         $button = Helper::render($this->button);
 
         // 如果没有HTML标签则添加一个 a 标签
-        if (! preg_match('/(\<\/[\d\w]+\s*\>+)/i', $button)) {
-            $button = "<a href=\"javascript:void(0)\">{$button}</a>";
+        if (! preg_match('/<[^>]+>/', $button)) {
+            $button = sprintf('<a href="javascript:void(0)">%s</a>', $button);
         }
 
         return <<<HTML

@@ -18,8 +18,8 @@ class Between extends Filter
     public function __construct()
     {
         $this->class = [
-            'start' => uniqid('column-filter-start-'),
-            'end'   => uniqid('column-filter-end-'),
+            'start' => uniqid('column-filter-start-', true),
+            'end'   => uniqid('column-filter-end-', true),
         ];
     }
 
@@ -175,20 +175,20 @@ JS;
     </a>
     <ul class="dropdown-menu" role="menu" style="min-width: 180px;padding: 10px;left: -70px;border-radius: 0;font-weight:normal;background:#fff">
         <li class="dropdown-item">
-            <input type="text" 
-                class="form-control input-sm {$this->class['start']}" 
-                name="{$this->getQueryName()}[start]" 
-                placeholder="{$this->trans('between_start')}" 
-                value="{$value['start']}" 
+            <input type="text"
+                class="form-control input-sm {$this->class['start']}"
+                name="{$this->getQueryName()}[start]"
+                placeholder="{$this->trans('between_start')}"
+                value="{$value['start']}"
                 autocomplete="off" />
         </li>
         <li style="margin: 5px;"></li>
         <li class="dropdown-item">
-            <input type="text" 
-                class="form-control input-sm {$this->class['end']}" 
-                name="{$this->getQueryName()}[end]"  
-                placeholder="{$this->trans('between_end')}" 
-                value="{$value['end']}" 
+            <input type="text"
+                class="form-control input-sm {$this->class['end']}"
+                name="{$this->getQueryName()}[end]"
+                placeholder="{$this->trans('between_end')}"
+                value="{$value['end']}"
                 autocomplete="off"/>
         </li>
         {$this->renderFormButtons()}

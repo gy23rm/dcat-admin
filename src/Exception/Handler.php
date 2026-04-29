@@ -75,10 +75,6 @@ class Handler implements ExceptionHandler
      */
     protected function replaceBasePath(string $path)
     {
-        return str_replace(
-            str_replace('\\', '/', base_path().'/'),
-            '',
-            str_replace('\\', '/', $path)
-        );
+        return str_replace(['\\', str_replace('\\', '/', base_path() . '/')], ['/', ''], $path);
     }
 }

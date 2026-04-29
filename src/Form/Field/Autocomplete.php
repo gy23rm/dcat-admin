@@ -133,12 +133,20 @@ class Autocomplete extends Text
 
     protected function formatGroupOptions()
     {
+        $groupOptions = [];
+        
         foreach ($this->groups as $group) {
             if (! array_key_exists('options', $group) || ! array_key_exists('label', $group)) {
                 continue;
             }
 
-            $this->options = array_merge($this->options, $this->formatOptions($group['options'], $group['label']));
+            // 先收集所有格式化的选项，避免在循环中重复合并数组
+            $groupOptions[] = $this->formatOptions($group['options'], $group['label']);
+        }
+
+        // 使用展开运算符一次性合并所有数组，性能更优
+        if ($groupOptions) {
+            $this->options = array_merge($this->options, ...$groupOptions);
         }
 
         $this->groups = [];

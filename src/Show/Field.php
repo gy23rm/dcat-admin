@@ -410,10 +410,10 @@ HTML;
             $content = is_string($value) ? json_decode($value, true) : $value;
             if (is_array($content)) {
                 array_walk($content, function (&$v, $k) {
-                    $v = htmlspecialchars($v);
+                    $v = htmlspecialchars($v, ENT_QUOTES | ENT_HTML5);
                 });
             } else {
-                $content = htmlspecialchars($content);
+                $content = htmlspecialchars($content, ENT_QUOTES | ENT_HTML5);
             }
             $field->wrap(false);
 
@@ -460,7 +460,7 @@ HTML;
             }
 
             if (is_array($v)) {
-                array_push($v, $val);
+                $v[] = $val;
 
                 return $v;
             } elseif ($v instanceof Collection) {
@@ -687,11 +687,11 @@ HTML;
     {
         return $this->as(function ($value) use ($abstract, $arguments) {
             if (is_array($value) || $value instanceof Arrayable) {
-                return call_user_func_array([collect($value), $abstract], $arguments);
+                return collect($value)->$abstract(...$arguments);
             }
 
             if (is_string($value)) {
-                return call_user_func_array([Str::class, $abstract], array_merge([$value], $arguments));
+                return Str::$abstract($value, ...$arguments);
             }
 
             return $value;
