@@ -151,7 +151,7 @@ class Helper
             $element = '';
 
             if ($value !== null) {
-                $element = $key.'="'.htmlentities($value, ENT_QUOTES, 'UTF-8').'" ';
+                $element = $key.'="'.htmlentities($value, ENT_QUOTES | ENT_HTML5, 'UTF-8').'" ';
             }
 
             $html .= $element;
@@ -446,7 +446,7 @@ class Helper
 
         $hasPrefix = false;
 
-        if (mb_strpos($color, '#') === 0) {
+        if (str_starts_with($color, '#')) {
             $color = mb_substr($color, 1);
 
             $hasPrefix = true;
@@ -482,7 +482,7 @@ class Helper
             return $color;
         }
 
-        if (mb_strpos($color, '#') === 0) {
+        if (str_starts_with($color, '#')) {
             $color = mb_substr($color, 1);
         }
 
@@ -579,7 +579,7 @@ class Helper
      */
     public static function isQQBrowser()
     {
-        return mb_strpos(mb_strtolower($_SERVER['HTTP_USER_AGENT'] ?? ''), 'qqbrowser') !== false;
+        return str_contains(mb_strtolower($_SERVER['HTTP_USER_AGENT'] ?? ''), 'qqbrowser');
     }
 
     /**
