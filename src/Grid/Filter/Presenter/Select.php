@@ -2,14 +2,11 @@
 
 namespace Dcat\Admin\Grid\Filter\Presenter;
 
-use Dcat\Admin\Exception\RuntimeException;
-use Dcat\Admin\Support\Helper;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Arr;
+use Dcat\Admin\Traits\HasModelOptions;
 
 class Select extends Presenter
 {
+    use HasModelOptions;
     /**
      * @var string
      */
@@ -122,45 +119,6 @@ class Select extends Presenter
         ]);
 
         return is_array($this->options) ? $this->options : [];
-    }
-
-    /**
-     * Load options from current selected resource(s).
-     *
-     * @param  string  $model
-     * @param  string  $idField
-     * @param  string  $textField
-     * @return $this
-     */
-    public function model($model, string $idField = 'id', string $textField = 'name')
-    {
-        if (! class_exists($model)
-            || ! in_array(Model::class, class_parents($model))
-        ) {
-            throw new RuntimeException("[$model] must be a valid model class");
-        }
-
-        $this->options = function ($value) use ($model, $idField, $textField) {
-            if (empty($value)) {
-                return [];
-            }
-
-            $resources = [];
-
-            if (is_array($value)) {
-                if (Arr::isAssoc($value)) {
-                    $resources[] = Arr::get($value, $idField);
-                } else {
-                    $resources = array_column($value, $idField);
-                }
-            } else {
-                $resources[] = $value;
-            }
-
-            return $model::find($resources)->pluck($textField, $idField)->toArray();
-        };
-
-        return $this;
     }
 
     /**

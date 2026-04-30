@@ -93,31 +93,20 @@ class Permission
      */
     public function shouldPassThrough($request)
     {
-        if ($this->isApiRoute($request) || Authenticate::shouldPassThrough($request)) {
+        if ($this->isApiRoute($request)) {
             return true;
         }
 
-        $excepts = array_merge(
+        $authExcept = array_merge(
+            (array) config('admin.auth.except', []),
+            Admin::context()->getArray('auth.except')
+        );
+
+        $permissionExcept = array_merge(
             (array) config('admin.permission.except', []),
             Admin::context()->getArray('permission.except')
         );
 
-        foreach ($excepts as $except) {
-            if ($request->routeIs($except) || $request->routeIs(admin_route_name($except))) {
-                return true;
-            }
-
-            $except = admin_base_path($except);
-
-            if ($except !== '/') {
-                $except = trim($except, '/');
-            }
-
-            if (Helper::matchRequestPath($except)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Helper::shouldPassThrough($request, [...$authExcept, ...$permissionExcept]);
     }
 }

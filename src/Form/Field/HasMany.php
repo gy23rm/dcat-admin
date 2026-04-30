@@ -8,7 +8,6 @@ use Dcat\Admin\Form\NestedForm;
 use Dcat\Admin\Support\Helper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 /**
  * Class HasMany.
@@ -16,6 +15,7 @@ use Illuminate\Support\Str;
 class HasMany extends Field
 {
     use Form\ResolveField;
+    use HasFormatValidationAttribute;
 
     /**
      * Relation name.
@@ -245,41 +245,6 @@ class HasMany extends Field
         }
 
         return $result;
-    }
-
-    /**
-     * Format validation attributes.
-     *
-     * @param  array  $input
-     * @param  string  $label
-     * @param  string  $column
-     * @return array
-     */
-    protected function formatValidationAttribute($input, $label, $column)
-    {
-        $new = $attributes = [];
-
-        if (is_array($column)) {
-            foreach ($column as $index => $col) {
-                $new[$col.$index] = $col;
-            }
-        }
-
-        foreach (array_keys(Arr::dot($input)) as $key) {
-            if (is_string($column)) {
-                if (Str::endsWith($key, ".$column")) {
-                    $attributes[$key] = $label;
-                }
-            } else {
-                foreach ($new as $k => $val) {
-                    if (Str::endsWith($key, ".$k")) {
-                        $attributes[$key] = $label."[$val]";
-                    }
-                }
-            }
-        }
-
-        return $attributes;
     }
 
     /**

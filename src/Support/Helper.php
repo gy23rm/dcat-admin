@@ -286,6 +286,34 @@ class Helper
     }
 
     /**
+     * Determine if the request should pass through based on except patterns.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  array  $excepts
+     * @return bool
+     */
+    public static function shouldPassThrough($request, array $excepts)
+    {
+        foreach ($excepts as $except) {
+            if ($request->routeIs($except) || $request->routeIs(admin_route_name($except))) {
+                return true;
+            }
+
+            $except = admin_base_path($except);
+
+            if ($except !== '/') {
+                $except = trim($except, '/');
+            }
+
+            if (static::matchRequestPath($except)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * 生成层级数据.
      *
      * @param  array  $nodes
