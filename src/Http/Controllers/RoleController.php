@@ -12,6 +12,7 @@ use Dcat\Admin\Widgets\Tree;
 
 class RoleController extends AdminController
 {
+    use HasMenuTreeField;
     public function title()
     {
         return trans('admin.roles');
@@ -113,21 +114,7 @@ class RoleController extends AdminController
                 });
 
             if ($bindMenu) {
-                $form->tree('menus', trans('admin.menu'))
-                    ->treeState(false)
-                    ->setTitleColumn('title')
-                    ->nodes(function () {
-                        $model = config('admin.database.menu_model');
-
-                        return (new $model())->allNodes();
-                    })
-                    ->customFormat(function ($v) {
-                        if (! $v) {
-                            return [];
-                        }
-
-                        return array_column($v, 'id');
-                    });
+                $this->addMenuTreeField($form);
             }
 
             $form->display('created_at', trans('admin.created_at'));
@@ -139,8 +126,7 @@ class RoleController extends AdminController
                 $form->disableDeleteButton();
             }
         })->saved(function () {
-            $model = config('admin.database.menu_model');
-            (new $model())->flushCache();
+            $this->flushMenuCache();
         });
     }
 

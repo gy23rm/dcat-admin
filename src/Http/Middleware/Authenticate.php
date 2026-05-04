@@ -42,22 +42,6 @@ class Authenticate
             Admin::context()->getArray('auth.except')
         );
 
-        foreach ($excepts as $except) {
-            if ($request->routeIs($except) || $request->routeIs(admin_route_name($except))) {
-                return true;
-            }
-
-            $except = admin_base_path($except);
-
-            if ($except !== '/') {
-                $except = trim($except, '/');
-            }
-
-            if (Helper::matchRequestPath($except)) {
-                return true;
-            }
-        }
-
-        return false;
+        return Helper::shouldPassThrough($request, $excepts);
     }
 }

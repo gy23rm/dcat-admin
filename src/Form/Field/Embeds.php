@@ -9,11 +9,11 @@ use Dcat\Admin\Form\ResolveField;
 use Dcat\Admin\Support\Helper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class Embeds extends Field implements FieldsCollection
 {
     use ResolveField;
+    use HasFormatValidationAttribute;
 
     /**
      * @var \Closure
@@ -158,41 +158,6 @@ class Embeds extends Field implements FieldsCollection
         }
 
         return $result;
-    }
-
-    /**
-     * Format validation attributes.
-     *
-     * @param  array  $input
-     * @param  string  $label
-     * @param  string  $column
-     * @return array
-     */
-    protected function formatValidationAttribute($input, $label, $column)
-    {
-        $new = $attributes = [];
-
-        if (is_array($column)) {
-            foreach ($column as $index => $col) {
-                $new[$col.$index] = $col;
-            }
-        }
-
-        foreach (array_keys(Arr::dot($input)) as $key) {
-            if (is_string($column)) {
-                if (Str::endsWith($key, ".$column")) {
-                    $attributes[$key] = $label;
-                }
-            } else {
-                foreach ($new as $k => $val) {
-                    if (Str::endsWith($key, ".$k")) {
-                        $attributes[$key] = $label."[$val]";
-                    }
-                }
-            }
-        }
-
-        return $attributes;
     }
 
     /**
