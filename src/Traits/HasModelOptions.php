@@ -41,6 +41,7 @@ trait HasModelOptions
                 $resources[] = $value;
             }
 
+            // 使用 whereIn 而非 find，以支持非主键字段（如 uuid、slug 等）
             return $model::whereIn($idField, $resources)->pluck($textField, $idField)->toArray();
         };
 
