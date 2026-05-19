@@ -171,12 +171,8 @@ class ModelCreator
      */
     protected function replaceDatetimeFormatter(&$stub)
     {
-        $import = $use = '';
-
-        if (version_compare(app()->version(), '7.0.0') >= 0) {
-            $import = 'use Dcat\\Admin\\Traits\\HasDateTimeFormatter;';
-            $use = 'use HasDateTimeFormatter;';
-        }
+        $import = 'use Dcat\\Admin\\Traits\\HasDateTimeFormatter;';
+        $use = 'use HasDateTimeFormatter;';
 
         $stub = str_replace(['DummyImportDateTimeFormatterTrait', 'DummyUseDateTimeFormatterTrait'], [$import, $use], $stub);
 
