@@ -110,7 +110,7 @@ class Translator
     protected function getTranslateMethod()
     {
         if (static::$method === null) {
-            static::$method = version_compare(app()->version(), '6.0', '>=') ? 'get' : 'trans';
+            static::$method = 'get';
         }
 
         return static::$method;
