@@ -13,7 +13,7 @@
                 <option value="{{ $select }}" {{  in_array($select, (array) $value) ?'selected':'' }}>{{$option}}</option>
             @endforeach
         </select>
-        <input type="hidden" name="{{$name}}[]" />
+        <input type="hidden" name="{{$name}}[]" {!! $value ? 'disabled' : '' !!}/>
 
         @include('admin::form.help-block')
 
@@ -21,3 +21,9 @@
 </div>
 
 @include('admin::form.select-script')
+
+<script>
+$('.{{$selector}}').on('change.select2', function () {
+    $(this).next('input[type="hidden"]').prop('disabled', $(this).val()?.length > 0);
+});
+</script>

@@ -722,9 +722,7 @@ class Builder implements FieldsCollection
                 );
             }
 
-            $content = $this->layout->build(
-                $this->renderHiddenFields()
-            );
+            $content = $this->layout->build();
         }
 
         return "{$open}{$content}{$this->close()}";
