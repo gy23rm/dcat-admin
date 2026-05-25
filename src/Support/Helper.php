@@ -151,7 +151,9 @@ class Helper
             $element = '';
 
             if ($value !== null) {
-                $element = $key.'="'.htmlentities($value, ENT_QUOTES | ENT_HTML5, 'UTF-8').'" ';
+                // FIX: ENT_HTML5 named-entity table encodes "_" -> "&lowbar;" etc.,
+                // breaking attribute values like name="foo_bar". Use ENT_QUOTES only.
+                $element = $key.'="'.htmlentities($value, ENT_QUOTES, 'UTF-8').'" ';
             }
 
             $html .= $element;
