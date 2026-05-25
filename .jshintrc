@@ -1,0 +1,27 @@
+{
+    "esversion": 11,
+    "browser": true,
+    "module": true,
+    "jquery": true,
+    "undef": true,
+    "unused": true,
+    "eqeqeq": true,
+    "curly": true,
+    "strict": false,
+    "globals": {
+        "Dcat": true,
+        "NProgress": true,
+        "Swal": true,
+        "toastr": true,
+        "axios": true,
+        "moment": true,
+        "Pjax": true,
+        "layui": true,
+        "tinymce": true,
+        "SimpleMDE": true,
+        "marked": true,
+        "UE": true,
+        "wangEditor": true,
+        "HtmlEditor": true
+    }
+}

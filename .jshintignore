@@ -1,0 +1,5 @@
+node_modules/
+resources/dist/
+resources/assets/dcat/plugins/
+resources/assets/adminlte/
+vendor/
