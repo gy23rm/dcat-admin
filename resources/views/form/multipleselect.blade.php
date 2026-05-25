@@ -23,7 +23,7 @@
 @include('admin::form.select-script')
 
 <script>
-$('.{{$selector}}').on('change.select2', function () {
-    $(this).next('input[type="hidden"]').prop('disabled', $(this).val()?.length > 0);
+$('.{{$selector}}').off('change.select2').on('change.select2', function () {
+    $(this).closest('.field').find('input[type="hidden"][name="{{$name}}[]"]').prop('disabled', $(this).val()?.length > 0);
 });
 </script>
