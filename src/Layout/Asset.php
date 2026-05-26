@@ -689,7 +689,13 @@ class Asset
             $url .= '?';
         }
 
-        $ver = 'v'.Admin::VERSION;
+        $assetsVersion = config('admin.assets_version', Admin::VERSION);
+
+        if (! $assetsVersion) {
+            return rtrim($url, '?');
+        }
+
+        $ver = 'v'.$assetsVersion;
 
         return Str::endsWith($url, '?') ? $url.$ver : $url.'&'.$ver;
     }

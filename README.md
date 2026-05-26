@@ -17,6 +17,7 @@
 
 > 更多功能正在持续开发... 欢迎交流评论
 
+- 支持通过 `admin.assets_version` 配置项（或 `ADMIN_ASSETS_VERSION` 环境变量）自定义 JS/CSS 缓存破坏版本号，不再强制跟随框架版本
 - [2025/08/05 增强对枚举字段的渲染支持](https://github.com/PrintNow/dcat-admin/pull/5)
 - [@deflinhec : 修正 Grid 以 LazyRenderable 呈現時Group Filter 沒有正確篩選](https://github.com/PrintNow/dcat-admin/commit/4390a8f494c20910828e7c93513d13032f0d01dd)
 - [新增 highlightjs 类以支持代码块高亮显示](https://github.com/PrintNow/dcat-admin/commit/52050882eea475b9d3863ace98048404f7d320b7)
