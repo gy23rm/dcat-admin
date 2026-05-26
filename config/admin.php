@@ -106,6 +106,18 @@ return [
    */
     'assets_server' => env('ADMIN_ASSETS_SERVER'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Assets version
+    |--------------------------------------------------------------------------
+    |
+    | The version string appended to JS/CSS URLs as a cache-busting query
+    | parameter (e.g. `?v1.0.0`). Defaults to the framework version. Set to
+    | null/empty to disable the version query entirely.
+    |
+    */
+    'assets_version' => env('ADMIN_ASSETS_VERSION'),
+
     /**
      * @deprecated 不再建议使用此配置。如果你使用了反向代理，配置好 `app/Http/Middleware/TrustProxies.php` 中的 $proxies 属性，
      *             页面就会自动使用 https 协议。未来将完全移除此配置。

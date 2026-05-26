@@ -106,6 +106,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Assets version
+    |--------------------------------------------------------------------------
+    |
+    | The version string appended to JS/CSS URLs as a cache-busting query
+    | parameter (e.g. `?v1.0.0`). Defaults to the framework version. Set to
+    | null/empty to disable the version query entirely.
+    |
+    */
+    'assets_version' => env('ADMIN_ASSETS_VERSION'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Access via `https`
     |--------------------------------------------------------------------------
     |
