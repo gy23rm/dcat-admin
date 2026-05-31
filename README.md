@@ -72,7 +72,9 @@ php artisan admin:install
 
 ## 免责声明
 
-本项目已在实际生产环境使用，但无法保证所有修改绝对无误，上线前请充分测试。
+本项目已通过测试并在实际生产环境中使用，但无法保证所有修改绝对无误，上线前请充分测试。
+
+如果你在使用过程中遇到任何问题，欢迎[提交 Issue](https://github.com/PrintNow/dcat-admin/issues)，感谢每一位反馈和贡献的朋友。
 
 ## License
 
