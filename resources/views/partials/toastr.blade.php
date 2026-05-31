@@ -1,9 +1,3 @@
-@if(Session::has('dcat-admin-toastr'))
-    @php
-        $toastr  = Session::get('dcat-admin-toastr');
-        $type    = $toastr->get('type')[0] ?? 'success';
-        $message = $toastr->get('message')[0] ?? '';
-        $options = admin_javascript_json($toastr->get('options', []));
-    @endphp
-    <script>$(function () { toastr.{{$type}}('{!!  $message  !!}', null, {!! $options !!}); })</script>
+@if($toastr = \Dcat\Admin\Support\SessionMessage::tryFrom(Session::get('dcat-admin-toastr')))
+    <script>$(function () { toastr.{!! $toastr->getToastrType() !!}({!! json_encode($toastr->getMessage()) !!}, null, {!! admin_javascript_json($toastr->getOptions()) !!}); })</script>
 @endif
