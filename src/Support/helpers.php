@@ -307,9 +307,10 @@ if (! function_exists('admin_cipher_decrypt')) {
      *
      * 强校验：
      * - 解密结果必须是正整数，0 / 负数 / 非数字一律返回 null（不解密）;
-     * - 作用域 $key 必填；UuidCipher 不再强制校验作用域注册（只要求是 1~2 个
-     *   可打印 ASCII 字符短标签，超长/中文抛异常；解密时不比对 scope），
-     *   CryptCipher 仍会校验与密文前缀 scope 一致.
+     * - 作用域 $key 必填（缺参/传 null 是 TypeError，传空串抛 InvalidArgumentException）；
+     * - UuidCipher / CryptCipher 解密时都会校验与密文内嵌 scope 一致，不一致返回 null
+     *   （防跨场景重放）；页面访问走中间件，控制器配置 cipherScope 时以它为唯一可接受
+     *   作用域，密文标签不一致 → 解密失败 → 404。
      *
      * @param  string  $cipher
      * @param  string  $key  作用域短标签（1~2 个可打印 ASCII 字符，如 gi / fo / bo），必填；需与加密时的 scope 一致

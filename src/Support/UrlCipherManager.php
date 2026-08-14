@@ -76,10 +76,12 @@ class UrlCipherManager
     /**
      * 解密主键值；失败返回 null.
      *
-     * 密文内嵌 scope 编号，不传 $key 时由实现自动按编号查表还原，无需控制器上下文。
+     * 作用域 $key 必填（类型 string）：解密时校验与密文内嵌标签一致，
+     * 不一致返回 null（防跨场景重放）。页面访问由中间件提供服务：
+     * 控制器配置 cipherScope 时以它为唯一可接受作用域，否则自动提取密文标签。
      *
      * @param  string  $cipher
-     * @param  string|null  $key  作用域标识，需与加密时一致；不传时自动识别
+     * @param  string  $key  作用域标识，需与加密时一致
      * @return string|null
      */
     public function decrypt(string $cipher, string $key): ?string
@@ -95,6 +97,21 @@ class UrlCipherManager
     public function enabled(): bool
     {
         return (bool) config('admin.route.encrypt', false);
+    }
+
+    /**
+     * 当前控制器期望的作用域（供中间件解密校验使用）.
+     *
+     * 加密时若控制器配置了 cipherScope，URL 一律用它加密；
+     * 解密时中间件也应**只用它**去解密（标签不一致 → 解密失败 → 404），
+     * 而不是用密文自己声称的标签（否则"解密校验作用域"形同虚设）。
+     * 未配置 cipherScope / 闭包路由 → 返回 null，中间件回退自动提取标签。
+     *
+     * @return string|null
+     */
+    public function expectedScope(): ?string
+    {
+        return $this->resolveDefaultScope();
     }
 
     /**

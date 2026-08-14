@@ -77,15 +77,23 @@ class Cipher
 
         $parameters = $route->parameters();
 
+        // 解密必须用「期望作用域」而不是「密文声称的作用域」：
+        // 控制器配置了 cipherScope 时，URL 加密也一律用它；解密也只用它，
+        // 密文标签与它不一致 → 解密失败 → 参数保持密文 → 控制器 find 不到 → 404。
+        // 未配置 cipherScope（或闭包路由 / 旧版内置 gi/fo 混合场景）才回退自动提取标签。
+        $expected = $this->manager->expectedScope();
+
         foreach ($parameters as $key => $value) {
             if (! is_string($value) || $value === '') {
                 continue;
             }
 
-            // 作用域必填：先从密文自动提取标签（UuidCipher 密文内嵌 2 字节标签，
-            // CryptCipher 密文是 [scope]: 前缀），拿到真正的 scope 再解密。
-            // 这样既满足「加解密都必传 scope」，又保持中间件「自动识别」的体验。
-            $scope = $this->extractScope($value);
+            // 解密作用域来源：
+            //  - 有期望 scope（控制器 cipherScope）→ 直接用期望值，与密文标签比对不匹配即失败；
+            //  - 无期望 scope（未配置 / 闭包路由）→ 手动从密文提取标签（UuidCipher 内嵌 2 字节 /
+            //    CryptCipher [scope]: 前缀）自动解密。
+            // 两种方式都满足「加解密都必传 scope」；前者更加严格（防跨场景重放）。
+            $scope = $expected ?? $this->extractScope($value);
 
             if ($scope === null) {
                 continue;  // 非密文（如手工输入 /users/42），不处理
