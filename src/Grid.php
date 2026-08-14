@@ -593,7 +593,7 @@ class Grid
             return $key;
         }
 
-        return admin_cipher_encrypt($key, 'grid.id');
+        return admin_cipher_encrypt($key, 'gi');
     }
 
     /**

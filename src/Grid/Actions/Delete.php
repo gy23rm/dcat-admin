@@ -39,7 +39,7 @@ class Delete extends RowAction
         $key = $this->getKey();
 
         if (config('admin.route.encrypt', false)) {
-            $key = admin_cipher_encrypt($key, 'grid.id');
+            $key = admin_cipher_encrypt($key, 'gi');
         }
 
         return "{$this->resource()}/{$key}";

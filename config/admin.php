@@ -89,15 +89,22 @@ return [
         | encrypt: 是否启用
         | cipher : 加解密实现类，必须实现 \Dcat\Admin\Contracts\UrlCipher
         |          当前默认 UuidCipher（AES 伪 UUID 版，密文为 36 位 UUID 格式；
-        |          仅支持非负 int 主键；从 cipher_salt 派生 AES 密钥）
+        |          仅支持正整数主键，范围 1 ~ 1099511627775（uint40）；
+        |          作用域内嵌密文，从 cipher_salt 派生 AES 密钥）
         |          可选 CryptCipher（配置盐混淆版；盐为空会报错）
         | cipher_salt : 加解密盐（字符串），用于派生混淆字节流；必须有值，为空会抛异常
+        | cipher_scopes : （历史兼容，可保留）作用域常量数组扩展，仅旧版 UuidCipher 强制校验
+        |          注册用。当前实现不再强制校验作用域范围；作用域必须是 1~2 个可打印
+        |          ASCII 字符的短标签（如 gi / fo / bo），超长（如 book:grid.id）加密时报错。
+        |          以下配置仅为历史兼容保留，可删除
         */
         'encrypt' => env('ADMIN_ROUTE_ENCRYPT', false),
 
         'cipher' => \Dcat\Admin\Support\UuidCipher::class,
 
         'cipher_salt' => env('ADMIN_ROUTE_CIPHER_SALT', 'dcat_c'),
+
+        'cipher_scopes' => [],
     ],
 
     /*

@@ -58,7 +58,7 @@ ADMIN_ROUTE_CIPHER_SALT=111
   该通道同时被「导出选中行」复用（`ExportButton` 直接拼 `__rows__`），
   因此保持明文以兼容导出；确认弹窗已置空，不展示这些明文主键。
 - **单行删除**（Grid/Tree/Form 的删除按钮）是**加密的**：`data-url` 里的主键经
-  `admin_cipher_encrypt($key, 'grid.id' / 'form.id')` 加密，只有确认弹窗文案被置空
+  `admin_cipher_encrypt($key, 'gi' / 'fo')` 加密，只有确认弹窗文案被置空
   （不展示明文），URL 本身是密文。
 
 ---
@@ -67,25 +67,51 @@ ADMIN_ROUTE_CIPHER_SALT=111
 
 加密时有一个「作用域」概念，用于区分同一个主键在不同上下文下的密文。
 
-| 上下文 | 作用域 | 用途 |
-|---|---|---|
-| Grid 行操作 | `grid.id` | 列表页按钮 |
-| Form 表单 | `form.id` | 表单页提交/删除 |
-| 其它（内置调用点） | `grid.id` / `form.id` | 统一由内置代码处理 |
+`UuidCipher` 把**作用域短标签本身**（1~2 个可打印 ASCII 字符）写入密文第 2-3 字节
+（右补 `\x00`）。**作用域必须是 1~2 个可打印 ASCII 字符**（如 `gi`/`fo`/`bo`），
+超长（如 `grid.id`、`book:grid.id`）或中文会直接抛异常，不会静默截断：
+**不再强制校验作用域注册**：任意非空作用域都可加密；解密时读出 2 字节标签，
+仅要求非空，不校验是否在某个作用域数组、不与显式传入的 scope 比对——
+只用于还原主键（防跨场景重放靠标签不同产生不同密文）。
 
-**控制器身份前缀（可选）**：控制器可定义 `cipherScope` 属性，加密时会把控制器身份前缀合成进作用域
-（如 `book:grid.id`），进一步隔离不同控制器的密文，防止跨模块重放：
+内置约定（仅供参考，不强制）：
+
+| 作用域 | 用途 |
+|---|---|
+| `gi` | Grid 行操作（编辑/查看/删除按钮） |
+| `fo` | Form 表单（提交/删除/查看） |
+
+**`cipher_scopes` 配置为历史兼容保留**：旧版 `UuidCipher` 用它强制校验作用域注册，
+当前实现不再读取做强制校验，可保留可删除：
+
+```php
+'route' => [
+    ...
+    // 历史兼容，可省略
+    'cipher_scopes' => [
+        // 历史兼容示例（旧版用）
+
+    ],
+],
+```
+
+**控制器指定最终作用域（可选）**：控制器可定义 `cipherScope` 属性，其属性值**直接作为
+该控制器 URL 加密的最终作用域**（不再拼接前缀/合成）。这样同一控制器的 grid / form
+URL 都使用同一个作用域隔离：
 
 ```php
 class BookController extends AdminController
 {
-    // 指定该控制器 URL 加密的身份前缀
-    protected $cipherScope = 'book';
+    // cipherScope 直接是最终作用域短标签（1~2 可打印 ASCII 字符）
+    // 该控制器所有加密 URL 统一使用此作用域（不再用调用点的 gi/fo）
+    protected $cipherScope = 'bo';
 }
 ```
 
-> 不设置 `cipherScope` 时行为等同旧版，不叠加身份。**解密侧不需要关心作用域**——密文自带
-> scope 标识，中间件自动还原，手动解密时只需传入加密时相同的 scope。
+> **不设置 `cipherScope`** 时行为等同旧版，使用调用点的 `gi` / `fo`。
+> **解密侧不需要关心作用域** —— 密文自带 2 字节标签，中间件仅按标签还原主键；
+> 手动解密传入的 scope 在 `UuidCipher` 下不参与校验（仅参数兼容），
+> `CryptCipher` 仍会校验与密文前缀 scope 一致。
 
 ---
 
@@ -95,13 +121,13 @@ class BookController extends AdminController
 
 ```php
 // helpers.php 无 namespace，函数是全局的，直接调用即可
-$cipher = admin_cipher_encrypt(42, 'book:grid.id');
+$cipher = admin_cipher_encrypt(42, 'bo');
 ```
 
 ### 4.1 加密
 
 ```php
-$cipher = admin_cipher_encrypt(42, 'book:grid.id');
+$cipher = admin_cipher_encrypt(42, 'bo');
 // 返回：f5a24e32-xxxx-xxxx-xxxx-xxxxxxxxxxxx（UUID 样式密文）
 // 参数：$plain 正整数主键（int，弱类型下数字字符串也能传）；$key 作用域必填
 ```
@@ -112,7 +138,7 @@ $cipher = admin_cipher_encrypt(42, 'book:grid.id');
 ### 4.2 解密
 
 ```php
-$plain = admin_cipher_decrypt($cipher, 'book:grid.id');
+$plain = admin_cipher_decrypt($cipher, 'bo');
 // 返回：'42'（明文主键字符串）；失败返回 null
 // 参数：$cipher 密文；$key 作用域必填，需与加密时一致
 ```
@@ -125,11 +151,11 @@ $plain = admin_cipher_decrypt($cipher, 'book:grid.id');
 
 ```php
 // 加密
-$cipher = admin_cipher_encrypt($book->id, 'book:grid.id');   // 'f5a24e32-...'
+$cipher = admin_cipher_encrypt($book->id, 'bo');   // 'f5a24e32-...'
 $url    = "/admin/books/{$cipher}/edit";
 
 // 解密
-$id = admin_cipher_decrypt($cipher, 'book:grid.id');          // '42'
+$id = admin_cipher_decrypt($cipher, 'bo');          // '42'
 if ($id === null) {
     abort(404);
 }
@@ -160,9 +186,11 @@ if ($id === null) {
 
 | | **UuidCipher**（默认） | **CryptCipher**（可选） |
 |---|---|---|
-| 密文样式 | 36 位 UUID：`f5a24e32-xxxx-...` | `[grid.id]:a1b2c3...`（hex） |
+| 密文样式 | 36 位 UUID：`f5a24e32-xxxx-...` | `[gi]:a1b2c3...`（hex） |
 | 密钥派生 | AES-256 + PBKDF2（100k 迭代） | 配置盐 XOR 混淆（sha256 派生） |
-| 支持主键 | 非负 int | 非负 int（正整数） |
+| 支持主键 | 正整数 1 ~ 1099511627775（uint40） | 非负 int（无长度上限） |
+| 作用域内嵌 | 2 字节字符串 key（查常量数组） | `[scope]:` 前缀 |
+| 完整性校验 | 第一字节必须为 1 + key 须在数组 | 无（靠前缀 + XOR 还原） |
 | 适用场景 | 追求密文形式隐蔽、更安全 | 简单轻量、可读性略高 |
 
 切换实现只需改 `cipher` 配置（需要同时保证 `cipher_salt` 存在）：
@@ -172,6 +200,31 @@ if ($id === null) {
 ```
 
 > 切换后旧密文无法解密（加密算法不同），请合理安排切换时机。
+
+### UuidCipher 字节布局
+
+`UuidCipher` 加密前会把主键拼成一个 **16 字节明文块**（恰好一个 AES 块，无需填充），
+然后整体走 AES-256-ECB 加密，hex 后拼成 36 位 UUID 样式：
+
+```
+┌─────────┬───────────────┬───────────────┬─────────────────┐
+│ 魔数 1B  │ 作用域标签 2B  │ 填充 8B        │ 主键 5B（大端）   │
+│  0x02   │ 短标签 ASCII  │ 0x00 全 0     │ uint40 BE       │
+└─────────┴───────────────┴───────────────┴─────────────────┘
+offset:   0              1..2           3..10          11..15
+```
+
+- **魔数**：固定 `0x02`，解密时**第一个字节必须为 2**，否则拒绝；
+- **作用域标签（2 字节）**：作用域短标签本身（1~2 个可打印 ASCII 字符）
+  （右补 `\x00` 到 2 字节）。**作用域必须本身是 1~2 个可打印 ASCII 字符**，
+  超长/中文在加密时抛异常（不做静默截断，避免标签碰撞）。
+  **不再强制校验注册**：解密时读出 2 字节 → 去掉尾部 `\x00` → 仅要求非空，
+  不校验是否在作用域数组、不与传入 scope 比对；
+- **填充**：8 字节全 0；
+- **主键（5 字节）**：主键自身的 5 字节大端表示（uint40，字节序 高→低），仅支持正整数 `1 ~ 1099511627775`。
+
+> **主键上限**：`UuidCipher` 支持 uint40 主键（最大约 1.1 万亿）。如果表主键是
+> bigint / 超过 1.1 万亿，请改用 `CryptCipher`（不设此上限），或在分表后使用。
 
 ---
 
@@ -250,8 +303,10 @@ $grid->column('sort')->orderable();
 
 ### 7.5 手动解密失败？
 
-`admin_cipher_decrypt` 要求传入与加密时**完全一致的 scope**。加密用了 `book:grid.id`，
-解密就必须传 `book:grid.id`（不是 `grid.id`），否则返回 null。
+`admin_cipher_decrypt` 要求传入与加密时**一致的 scope**。注意：**UuidCipher 已不强制
+校验作用域**（解密只还原主键，不比对 scope），因此传错 scope 不会返回 null。
+若你使用的是 `CryptCipher`（仍校验密文前缀 scope），则必须传与加密时完全一致的作用域
+（如 `bo`），否则返回 null——这通常是手动解密失败的常见原因。
 
 ---
 

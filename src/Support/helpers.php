@@ -294,7 +294,7 @@ if (! function_exists('admin_cipher_encrypt')) {
         }
 
         if ($key === '') {
-            throw new \InvalidArgumentException('admin_cipher_encrypt 必须传入作用域 $key（如 grid.id / form.id）');
+            throw new \InvalidArgumentException('admin_cipher_encrypt 必须传入作用域 $key（1~2 个可打印 ASCII 字符，如 gi / fo / bo）');
         }
 
         return app('admin.cipher')->encrypt($plain, $key);
@@ -307,10 +307,12 @@ if (! function_exists('admin_cipher_decrypt')) {
      *
      * 强校验：
      * - 解密结果必须是正整数，0 / 负数 / 非数字一律返回 null（不解密）;
-     * - 作用域 $key 必填，与加密时不匹配则返回 null（不会自动识别密文内嵌 scope）.
+     * - 作用域 $key 必填；UuidCipher 不再强制校验作用域注册（只要求是 1~2 个
+     *   可打印 ASCII 字符短标签，超长/中文抛异常；解密时不比对 scope），
+     *   CryptCipher 仍会校验与密文前缀 scope 一致.
      *
      * @param  string  $cipher
-     * @param  string  $key  作用域标识（如 grid.id / form.id），必填；需与加密时的 scope 一致
+     * @param  string  $key  作用域短标签（1~2 个可打印 ASCII 字符，如 gi / fo / bo），必填；需与加密时的 scope 一致
      * @return string|null
      *
      * @throws \InvalidArgumentException 未传作用域时抛出
@@ -318,7 +320,7 @@ if (! function_exists('admin_cipher_decrypt')) {
     function admin_cipher_decrypt(string $cipher, string $key): ?string
     {
         if ($key === '') {
-            throw new \InvalidArgumentException('admin_cipher_decrypt 必须传入作用域 $key（如 grid.id / form.id）');
+            throw new \InvalidArgumentException('admin_cipher_decrypt 必须传入作用域 $key（1~2 个可打印 ASCII 字符，如 gi / fo / bo）');
         }
 
         $plain = app('admin.cipher')->decrypt($cipher, $key);

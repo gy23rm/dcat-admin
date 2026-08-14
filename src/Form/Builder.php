@@ -349,7 +349,7 @@ class Builder implements FieldsCollection
             if ($id === null || $id === '') {
                 $id = (string) $id;
             } elseif (config('admin.route.encrypt', false)) {
-                $id = admin_cipher_encrypt($id, 'form.id');
+                $id = admin_cipher_encrypt($id, 'fo');
             }
 
             return $this->form->resource().'/'.$id;

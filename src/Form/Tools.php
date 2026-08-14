@@ -153,7 +153,7 @@ class Tools implements Renderable
     {
         if ($key = $this->form->getResourceId()) {
             if (config('admin.route.encrypt', false)) {
-                $key = admin_cipher_encrypt($key, 'form.id');
+                $key = admin_cipher_encrypt($key, 'fo');
             }
 
             return $this->getListPath().'/'.$key;

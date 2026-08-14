@@ -969,7 +969,7 @@ class Form implements Renderable
             return (string) $key;
         }
 
-        return (string) admin_cipher_encrypt($key, 'form.id');
+        return (string) admin_cipher_encrypt($key, 'fo');
     }
 
     /**

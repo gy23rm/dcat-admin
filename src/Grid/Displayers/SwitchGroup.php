@@ -29,7 +29,7 @@ class SwitchGroup extends SwitchDisplay
         if ($key === null || $key === '') {
             $key = (string) $key;
         } elseif (config('admin.route.encrypt', false)) {
-            $key = admin_cipher_encrypt($key, 'grid.id');
+            $key = admin_cipher_encrypt($key, 'gi');
         }
 
         return Admin::view('admin::grid.displayer.switchgroup', [

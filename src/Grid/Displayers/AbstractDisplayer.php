@@ -130,7 +130,7 @@ abstract class AbstractDisplayer
         }
 
         if (config('admin.route.encrypt', false)) {
-            return admin_cipher_encrypt($key, 'grid.id');
+            return admin_cipher_encrypt($key, 'gi');
         }
 
         return (string) $key;

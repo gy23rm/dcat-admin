@@ -56,7 +56,7 @@ class Cipher
                 continue;
             }
 
-            // 路径参数由 Grid/Form 以 grid.id / form.id 等作用域加密，
+            // 路径参数由 Grid/Form 以短标签作用域（gi / fo / bo 等）加密，
             // 这里不指定 scope，由实现自动剥离作用域前缀还原明文
             $plain = $this->manager->decrypt($value);
 

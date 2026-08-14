@@ -11,19 +11,20 @@ use Dcat\Admin\Contracts\UrlCipher;
  * - 仅面向「主键」场景：加密路径参数中的记录 ID（grid.id / form.id），
  *   其它查询参数一律保持明文，不做打包 / 分组。
  *
- * 作用域（scope）设计（方案 C：控制器前缀合成）：
- * - 内置调用点仍传显式 scope（grid.id / form.id），无需改动；
- * - encrypt 时，若当前控制器显式配置了 cipherScope，会把「该属性值」与传入 scope
- *   合成为复合 scope：{cipherScope}:{scope}（如 book:grid.id），
- *   从而让不同资源下的同 id 密文天然隔离；
- * - 身份仅取自 $controller->cipherScope（显式配置）；无该属性时不叠加身份，
- *   保持原 scope 不变（旧行为）；不用 title / 类名兜底；
+ * 作用域（scope）设计（方案 D：cipherScope 即最终作用域，不合成前缀）：
+ * - 内置调用点仍传显式 scope 短标签（'gi' = grid.id / 'fo' = form.id），
+ *   用于「未配置 cipherScope 的控制器」；
+ * - encrypt 时，若当前控制器显式配置了 cipherScope，其属性值 **直接作为最终作用域**
+ *   传给底层 cipher（不做任何字符串拼接 / 前缀合成）；
+ * - 底层加密不再强制校验作用域注册，但严格校验长度：作用域必须是
+ *   1~2 个可打印 ASCII 字符（'gi' / 'fo' / 'bo'），超长或中文会抛异常；
+ * - 无 cipherScope 时保持调用点 scope 不变（旧行为）；不用 title / 类名兜底；
  * - 显式启停：config('admin.route.encrypt') 为 false 时整个链路不加密。
  *
  * 用法：
  *   $manager = app('admin.cipher');
- *   $enc = $manager->encrypt(42, 'grid.id');         // BookController 下 → book:grid.id
- *   $enc = $manager->encrypt(42);                    // 无控制器 → 原样（null）
+ *   $enc = $manager->encrypt(42, 'gi');             // 无 cipherScope → gi
+ *   $enc = $manager->encrypt(42, 'gi');             // cipherScope='bo' → bo（覆盖为控制器标签）
  *   $dec = $manager->decrypt($enc);                  // 不传 scope 自动还原
  */
 class UrlCipherManager
@@ -41,22 +42,22 @@ class UrlCipherManager
     /**
      * 加密主键值（仅支持 int；scope 可空）.
      *
-     * 若当前请求可解析出控制器身份，会把身份前缀合成进 scope，
-     * 形成 {身份}:{scope}（如 book:grid.id）。
+     * 若当前控制器显式配置了 cipherScope，其属性值 **直接作为最终作用域**
+     * （不再做 {前缀}:{scope} 拼接）；否则使用传入的 $key 原样（如 gi / fo）。
+     * 底层 UuidCipher 要求作用域为 1~2 个可打印 ASCII 字符（短标签），
+     * 超长（如完整作用域 grid.id / book:grid.id）加密时会抛异常；CryptCipher 另按其规则。
      *
      * @param  int  $plain
-     * @param  string|null  $key  作用域标识（如 grid.id / form.id），可空
+     * @param  string|null  $key  调用点作用域短标签（如 gi / fo），cipherScope 未配置时使用
      * @return string
      */
     public function encrypt(int $plain, ?string $key = null): string
     {
         $identity = $this->resolveDefaultScope();
 
-        // 身份合成：只有拿到控制器身份时才加前缀；否则原样（含 null）
+        // 方案 D：cipherScope 就是最终作用域，不合成前缀
         if ($identity !== null) {
-            $key = $key === null || $key === ''
-                ? $identity
-                : $identity.':'.$key;
+            $key = $identity;
         }
 
         return $this->cipher->encrypt($plain, $key);
@@ -65,7 +66,7 @@ class UrlCipherManager
     /**
      * 解密主键值；失败返回 null.
      *
-     * 密文内嵌 scope 指纹，不传 $key 时由实现自动识别，无需控制器上下文。
+     * 密文内嵌 scope 编号，不传 $key 时由实现自动按编号查表还原，无需控制器上下文。
      *
      * @param  string  $cipher
      * @param  string|null  $key  作用域标识，需与加密时一致；不传时自动识别

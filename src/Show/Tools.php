@@ -222,7 +222,7 @@ class Tools implements Renderable
         $key = $this->panel->parent()->getKey();
 
         if (config('admin.route.encrypt', false)) {
-            $key = admin_cipher_encrypt($key, 'grid.id');
+            $key = admin_cipher_encrypt($key, 'gi');
         }
 
         return $this->getListPath().'/'.$key.'/edit';
@@ -238,7 +238,7 @@ class Tools implements Renderable
         $key = $this->panel->parent()->getKey();
 
         if (config('admin.route.encrypt', false)) {
-            $key = admin_cipher_encrypt($key, 'grid.id');
+            $key = admin_cipher_encrypt($key, 'gi');
         }
 
         return $this->getListPath().'/'.$key;

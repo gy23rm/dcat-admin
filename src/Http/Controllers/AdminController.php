@@ -44,9 +44,12 @@ class AdminController extends Controller
     }
 
     /**
-     * 获取 URL 主键加密的作用域标识（cipherScope 属性）.
+     * 获取 URL 主键加密的最终作用域（cipherScope 属性）.
      *
-     * 子类可定义 protected $cipherScope 来指定该控制器生成 URL 时的身份前缀；
+     * 子类可定义 protected $cipherScope 来直接指定该控制器 URL 加密使用的最终作用域
+     * （如 'bo'，不再拼接前缀/合成）。不再强制校验作用域注册，但要求
+     * 值为 1~2 个可打印 ASCII 字符（超长如 'book:grid.id' 加密时报错）——
+     * 加密时该值整体作为密文标签（1~2 个可打印 ASCII 字符，超出会抛异常）。
      * 外部访问走此 getter（避免直接读 protected 属性触发 PHP 可见性错误）.
      *
      * @return string|null
