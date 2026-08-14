@@ -25,7 +25,7 @@ use Dcat\Admin\Contracts\UrlCipher;
  *   $manager = app('admin.cipher');
  *   $enc = $manager->encrypt(42, 'gi');             // 无 cipherScope → gi
  *   $enc = $manager->encrypt(42, 'gi');             // cipherScope='bo' → bo（覆盖为控制器标签）
- *   $dec = $manager->decrypt($enc);                  // 不传 scope 自动还原
+ *   $dec = $manager->decrypt($enc, 'bo');           // 解密必传 scope，需与加密时一致
  */
 class UrlCipherManager
 {
@@ -40,6 +40,16 @@ class UrlCipherManager
     }
 
     /**
+     * 获取底层 cipher 实现（供中间件等读取作用域标签）.
+     *
+     * @return \Dcat\Admin\Contracts\UrlCipher
+     */
+    public function cipher(): UrlCipher
+    {
+        return $this->cipher;
+    }
+
+    /**
      * 加密主键值（仅支持 int；scope 可空）.
      *
      * 若当前控制器显式配置了 cipherScope，其属性值 **直接作为最终作用域**
@@ -51,7 +61,7 @@ class UrlCipherManager
      * @param  string|null  $key  调用点作用域短标签（如 gi / fo），cipherScope 未配置时使用
      * @return string
      */
-    public function encrypt(int $plain, ?string $key = null): string
+    public function encrypt(int $plain, string $key): string
     {
         $identity = $this->resolveDefaultScope();
 
@@ -72,7 +82,7 @@ class UrlCipherManager
      * @param  string|null  $key  作用域标识，需与加密时一致；不传时自动识别
      * @return string|null
      */
-    public function decrypt(string $cipher, ?string $key = null): ?string
+    public function decrypt(string $cipher, string $key): ?string
     {
         return $this->cipher->decrypt($cipher, $key);
     }

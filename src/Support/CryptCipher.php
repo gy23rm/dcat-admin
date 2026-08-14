@@ -23,15 +23,12 @@ class CryptCipher implements UrlCipher
     /**
      * {@inheritdoc}
      */
-    public function encrypt(int $plain, ?string $key = null): string
+    public function encrypt(int $plain, string $key): string
     {
+        // 作用域由类型系统强制必填（string $key）
         $salt = $this->salt();
 
-        $payload = (string) $plain;
-
-        if ($key !== null) {
-            $payload = $this->obfuscate($payload, $salt, $key);
-        }
+        $payload = $this->obfuscate((string) $plain, $salt, $key);
 
         return '['.$key.']:'.$payload;
     }
@@ -40,17 +37,19 @@ class CryptCipher implements UrlCipher
      * {@inheritdoc}
      *
      * - 无 [scope]: 前缀的值视为非密文，直接返回 null（不尝试解密）；
-     * - 传入 `$key`：严格校验作用域前缀，不匹配返回 null；
-     * - 不传 `$key`：自动提取作用域前缀参与派生。
+     * - 作用域 `$key` **必填**（类型声明 `string`）：缺参 / 传 `null` → PHP `TypeError`；
+     * - 严格校验作用域前缀，与传入 `$key` 不匹配返回 null。
      */
-    public function decrypt(string $cipher, ?string $key = null): ?string
+    public function decrypt(string $cipher, string $key): ?string
     {
+        // 作用域由类型系统强制必填（string $key）；随后与密文前缀比对，不匹配返回 null
+
         // 提取作用域前缀；无前缀视为非密文
         if (! preg_match('/^\[([^\]]+)\]:/', $cipher, $m)) {
             return null;
         }
 
-        if ($key !== null && $key !== $m[1]) {
+        if ($key !== $m[1]) {
             return null;
         }
 

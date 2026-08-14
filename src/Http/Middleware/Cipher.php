@@ -37,6 +37,32 @@ class Cipher
     }
 
     /**
+     * 从密文提取作用域标签：优先 UuidCipher->peekScope()；CryptCipher 密文
+     * 走 [scope]: 前缀正则；拿不到返回 null（视为非密文，跳过不处理）.
+     *
+     * @param  string  $value
+     * @return string|null
+     */
+    protected function extractScope(string $value): ?string
+    {
+        // CryptCipher 格式：[scope]:payload
+        if (preg_match('/^\[([^\]]+)\]:/', $value, $m)) {
+            return $m[1] !== '' ? $m[1] : null;
+        }
+
+        // UuidCipher 格式：UUID 样式，标签内嵌密文中，需解密才能取
+        $cipher = $this->manager->cipher();
+
+        if (method_exists($cipher, 'peekScope')) {
+            return $cipher->peekScope($value);
+        }
+
+        // 无 peekScope 的实现无法自动提标签；不传 key 会破坏必填约束，
+        // 这里按「非密文」处理（不改动原参数）。
+        return null;
+    }
+
+    /**
      * 解密路由路径参数（仅尝试，失败回退明文）.
      *
      * @return void
@@ -56,9 +82,16 @@ class Cipher
                 continue;
             }
 
-            // 路径参数由 Grid/Form 以短标签作用域（gi / fo / bo 等）加密，
-            // 这里不指定 scope，由实现自动剥离作用域前缀还原明文
-            $plain = $this->manager->decrypt($value);
+            // 作用域必填：先从密文自动提取标签（UuidCipher 密文内嵌 2 字节标签，
+            // CryptCipher 密文是 [scope]: 前缀），拿到真正的 scope 再解密。
+            // 这样既满足「加解密都必传 scope」，又保持中间件「自动识别」的体验。
+            $scope = $this->extractScope($value);
+
+            if ($scope === null) {
+                continue;  // 非密文（如手工输入 /users/42），不处理
+            }
+
+            $plain = $this->manager->decrypt($value, $scope);
 
             if ($plain !== null) {
                 $route->setParameter($key, $plain);

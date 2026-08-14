@@ -109,9 +109,8 @@ class BookController extends AdminController
 ```
 
 > **不设置 `cipherScope`** 时行为等同旧版，使用调用点的 `gi` / `fo`。
-> **解密侧不需要关心作用域** —— 密文自带 2 字节标签，中间件仅按标签还原主键；
-> 手动解密传入的 scope 在 `UuidCipher` 下不参与校验（仅参数兼容），
-> `CryptCipher` 仍会校验与密文前缀 scope 一致。
+> **解密必须传入作用域** —— 密文自带 2 字节标签/前缀，解密时需传与加密一致的 scope，
+> 不匹配返回 null（防跨场景重放）；中间件自动从密文提取标签解密，无需手动指定。
 
 ---
 
@@ -133,7 +132,7 @@ $cipher = admin_cipher_encrypt(42, 'bo');
 ```
 
 - 非正整数（`0` / `负数` / 非数字）→ 抛 `InvalidArgumentException`
-- 未传 `$key` / 空串 → 抛 `InvalidArgumentException`
+- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`（不满足类型即被引擎拦截，不进入业务逻辑）
 
 ### 4.2 解密
 
@@ -143,9 +142,10 @@ $plain = admin_cipher_decrypt($cipher, 'bo');
 // 参数：$cipher 密文；$key 作用域必填，需与加密时一致
 ```
 
-- 未传 `$key` / 空串 → 抛 `InvalidArgumentException`
-- 传入的 `$key` 与密文内嵌 scope 不一致 → 返回 `null`
+- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`；传空串 `` 可进入解密流程，但会因 scope 比对失败返回 `null`
+- 传入的 `$key` 与密文内嵌 scope 不一致 → 返回 `null`（防跨场景重放）
 - 解密结果非正整数 → 返回 `null`
+- 中间件解密自动提取标签，无需手动指定 scope
 
 ### 4.3 完整示例
 
@@ -241,17 +241,17 @@ use Dcat\Admin\Contracts\UrlCipher;
 
 class MyCipher implements UrlCipher
 {
-    public function encrypt(int $plain, ?string $key = null): string
+    public function encrypt(int $plain, string $key): string
     {
         // 返回 URL 安全字符集的密文
         return base64_encode("{$plain}|{$key}");
     }
 
-    public function decrypt(string $cipher, ?string $key = null): ?string
+    public function decrypt(string $cipher, string $key): ?string
     {
         $raw = base64_decode($cipher, true);
         [$plain, $scope] = explode('|', $raw);
-        if ($key !== null && $key !== $scope) {
+        if ($key !== $scope) {
             return null;   // scope 不匹配拒绝
         }
         return $plain;
@@ -268,8 +268,8 @@ class MyCipher implements UrlCipher
 接口签名（`Contracts/UrlCipher.php`）：
 
 ```php
-public function encrypt(int $plain, ?string $key = null): string;
-public function decrypt(string $cipher, ?string $key = null): ?string;
+public function encrypt(int $plain, string $key): string;
+public function decrypt(string $cipher, string $key): ?string;
 ```
 
 ---

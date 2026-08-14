@@ -48,7 +48,7 @@ use Dcat\Admin\Contracts\UrlCipher;
  * - AES-ECB 确定性：同一明文（同 scope）产出同一密文，可据此观察「哪些 URL 指向同一条
  *   记录」；对「隐藏主键 + 防枚举」足够，不是机密性/防重放方案；
  * - 本版本无独立完整性校验位：篡改检测依赖 AES 解密失败 + 魔数/作用域标签/范围粗校验；
- * - 默认中间件不传 scope：仅按标签还原主键，不与任何 scope 比对；
+ * - 中间件自动从密文提取标签并作为 scope 解密（peekScope）；对外手动解密必须传 scope;
  * - 切换 cipher_salt 后旧链接无法解密（属预期）。
  *
  * 配置：admin.route.cipher 指定本类即可（当前默认）。
@@ -86,7 +86,7 @@ class UuidCipher implements UrlCipher
      * @throws \InvalidArgumentException 主键非法 / scope 未注册
      * @throws \RuntimeException         cipher_salt 未配置或 AES 加密失败
      */
-    public function encrypt(int $plain, ?string $key = null): string
+    public function encrypt(int $plain, string $key): string
     {
         if ($plain <= 0) {
             throw new \InvalidArgumentException('UuidCipher 仅支持正整数主键（1 ~ 1099511627775），传入了：'.$plain);
@@ -131,17 +131,18 @@ class UuidCipher implements UrlCipher
     /**
      * {@inheritdoc}
      *
+     * - 作用域 $key **必填**（类型声明 `string`）：缺参 / 传 `null` → PHP `TypeError`；
      * - 长度非法 / 非 32 hex / 无连字符结构 → 视为非密文，返回 null（明文不误伤）；
      * - AES 解密失败 → 返回 null（篡改拒绝）；
      * - 第一个字节必须为 2（魔数），否则返回 null；
-     * - 第 2-3 字节读出作用域 key（去掉尾部 \x00）必须 array_key_exists
-     *   于作用域数组，否则返回 null；
-     * - 显式传入 scope（key）时，还需与 key 对应的 scope 名一致，否则返回 null；
+     * - 第 2-3 字节读出作用域标签，必须与传入的 $key 一致，否则返回 null；
      * - 主键必须为正整数（> 0），否则返回 null；
      * - 成功返回明文主键字符串。
      */
-    public function decrypt(string $cipher, ?string $key = null): ?string
+    public function decrypt(string $cipher, string $key): ?string
     {
+        // 作用域由类型系统强制必填（string $key），空串在标签比对时自然不匹配返回 null
+
         // 36 字符是合法 UUID 密文的最大长度，超长值直接视为非密文
         if (strlen($cipher) > 36) {
             return null;
@@ -170,11 +171,11 @@ class UuidCipher implements UrlCipher
             return null;
         }
 
-        // 2. 校验：第 2-3 字节 = 作用域标签（去掉尾部 \x00），仅要求非空；
-        //    不再校验是否注册，也不与显式传入的 scope 比对
+        // 2. 校验：第 2-3 字节 = 作用域标签（去掉尾部 \x00）
+        //    必须与传入的 $key 一致，不匹配直接拒绝（防跨场景重放）
         $scopeLabel = rtrim(substr($decrypted, 1, 2), "\x00");
 
-        if ($scopeLabel === '') {
+        if ($scopeLabel === '' || $scopeLabel !== $key) {
             return null;
         }
 
@@ -200,7 +201,7 @@ class UuidCipher implements UrlCipher
      * 而不是偷偷截断（如 'grid.id' 7 字符必须改成 'gi' 这类短标签才能加密）。
      *
      * 不校验是否「注册」——只要符合长度/字符集约束即可加密；
-     * 解密侧仅要求标签非空，不比对任何注册表/显式 scope.
+     * 解密侧必须传入与加密一致的 scope，标签不匹配返回 null.
      *
      * @param  string  $scope
      * @return string 1~2 个可打印 ASCII 字符
@@ -220,6 +221,48 @@ class UuidCipher implements UrlCipher
         }
 
         return $scope;
+    }
+
+    /**
+     * 提取密文内嵌的作用域标签（供中间件/调用方在解密前确定正确 scope）.
+     *
+     * 与 decrypt 的区别：不校验传入 scope（其目的就是拿 scope），
+     * 只在密文合法时返回标签；格式非法 / AES 失败 / 魔数错 / 标签空 → 返回 null.
+     *
+     * @param  string  $cipher
+     * @return string|null  密文内嵌的 1~2 字符标签；非法密文返回 null
+     */
+    public function peekScope(string $cipher): ?string
+    {
+        if (strlen($cipher) > 36) {
+            return null;
+        }
+
+        $hex = str_replace('-', '', $cipher);
+
+        if ($hex === '' || strlen($hex) !== 32 || ! ctype_xdigit($hex)) {
+            return null;
+        }
+
+        $cipherRaw = hex2bin($hex);
+
+        if ($cipherRaw === false || strlen($cipherRaw) !== 16) {
+            return null;
+        }
+
+        $decrypted = openssl_decrypt($cipherRaw, 'aes-256-ecb', $this->secret(), OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING);
+
+        if ($decrypted === false || strlen($decrypted) !== 16 || $decrypted[0] !== static::MAGIC) {
+            return null;
+        }
+
+        $scopeLabel = rtrim(substr($decrypted, 1, 2), "\x00");
+
+        if ($scopeLabel === '') {
+            return null;
+        }
+
+        return $scopeLabel;
     }
 
     /**

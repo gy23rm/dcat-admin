@@ -21,14 +21,14 @@ interface UrlCipher
      * @param  string|null  $key  作用域标识，同一个明文在不同作用域下可用不同密文，防止跨场景重放
      * @return string 密文（URL 安全字符集）
      */
-    public function encrypt(int $plain, ?string $key = null): string;
+    public function encrypt(int $plain, string $key): string;
 
     /**
      * 解密一个密文.
      *
      * @param  string  $cipher  密文
-     * @param  string|null  $key  作用域标识，与加密时必须一致
+     * @param  string|null  $key  作用域标识（必填）；解密时必须与加密时一致，不匹配返回 null
      * @return string|null 解密后的明文；解密失败时返回 null（由调用方决定是否回退明文）
      */
-    public function decrypt(string $cipher, ?string $key = null): ?string;
+    public function decrypt(string $cipher, string $key): ?string;
 }
