@@ -20,9 +20,4 @@ class Select extends AbstractDisplayer
             'refresh' => $refresh,
         ]);
     }
-
-    protected function url()
-    {
-        return $this->resource().'/'.$this->getKey();
-    }
 }

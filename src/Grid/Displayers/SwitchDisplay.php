@@ -31,9 +31,4 @@ class SwitchDisplay extends AbstractDisplayer
             compact('column', 'color', 'refresh', 'checked', 'url')
         );
     }
-
-    protected function url()
-    {
-        return $this->resource().'/'.$this->getKey();
-    }
 }

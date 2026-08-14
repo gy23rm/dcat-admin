@@ -273,9 +273,68 @@ if (! function_exists('admin_url')) {
     }
 }
 
+if (! function_exists('admin_cipher_encrypt')) {
+    /**
+     * 加密一个 URL 参数值（仅支持正整数主键）.
+     *
+     * 强校验：
+     * - 仅接受正整数 int，0 / 负数一律抛异常（弱类型下字符串会先被 PHP 转 int 再进入）;
+     * - 作用域 $key 必填，缺省抛异常（防产出无 scope 的密文）.
+     *
+     * @param  int  $plain
+     * @param  string  $key  作用域标识（如 grid.id / form.id），必填
+     * @return string
+     *
+     * @throws \InvalidArgumentException 传入非正整数，或未传作用域时抛出
+     */
+    function admin_cipher_encrypt(int $plain, string $key)
+    {
+        if ($plain <= 0) {
+            throw new \InvalidArgumentException('admin_cipher_encrypt 只支持正整数主键，传入了：'.var_export($plain, true));
+        }
+
+        if ($key === '') {
+            throw new \InvalidArgumentException('admin_cipher_encrypt 必须传入作用域 $key（如 grid.id / form.id）');
+        }
+
+        return app('admin.cipher')->encrypt($plain, $key);
+    }
+}
+
+if (! function_exists('admin_cipher_decrypt')) {
+    /**
+     * 解密一个 URL 参数值，失败返回 null.
+     *
+     * 强校验：
+     * - 解密结果必须是正整数，0 / 负数 / 非数字一律返回 null（不解密）;
+     * - 作用域 $key 必填，与加密时不匹配则返回 null（不会自动识别密文内嵌 scope）.
+     *
+     * @param  string  $cipher
+     * @param  string  $key  作用域标识（如 grid.id / form.id），必填；需与加密时的 scope 一致
+     * @return string|null
+     *
+     * @throws \InvalidArgumentException 未传作用域时抛出
+     */
+    function admin_cipher_decrypt(string $cipher, string $key): ?string
+    {
+        if ($key === '') {
+            throw new \InvalidArgumentException('admin_cipher_decrypt 必须传入作用域 $key（如 grid.id / form.id）');
+        }
+
+        $plain = app('admin.cipher')->decrypt($cipher, $key);
+
+        // 解密结果必须为正整数：0 / 负数 / 非数字一律返回 null（不解密）
+        if ($plain === null || ! is_int($plain + 0) || $plain <= 0) {
+            return null;
+        }
+
+        return $plain;
+    }
+}
+
 if (! function_exists('admin_base_path')) {
     /**
-     * Get admin url.
+     * Get admin base path.
      *
      * @param  string  $path
      * @return string
