@@ -57,6 +57,7 @@ php artisan admin:install
 - 增强枚举（`BackedEnum`）字段的渲染支持
 - 支持 `.5` 列宽，如 `col-sm-1.5`
 - 优化 HTTPS 站点的资源 URL 生成
+- **新增 URL 主键加密**：可对路由路径中的主键（如 `/admin/books/{id}/edit`）进行加密（默认 36 位 UUID 样式密文），防止直接暴露数据库主键；支持 `encrypt` / `cipher` / `cipher_salt` 配置与手动加解密 Helper，详见 [加密功能使用说明](docs/url-cipher-guide.md)
 
 ### Bug 修复
 
@@ -69,6 +70,10 @@ php artisan admin:install
 - [中文文档](https://learnku.com/docs/dcat-admin)
 - [English documentation](http://www.dcatadmin.com/docs/en-2.x/quick-start.html)
 - [原项目 README（功能特性、扩展、鸣谢）](README.origin.md)
+
+项目扩展能力专项说明：
+
+- [URL 主键加密功能使用说明](docs/url-cipher-guide.md)
 
 ## 免责声明
 

@@ -88,9 +88,9 @@ return [
         |
         | encrypt: 是否启用
         | cipher : 加解密实现类，必须实现 \Dcat\Admin\Contracts\UrlCipher
-        |          默认 CryptCipher（配置盐混淆版；盐为空会报错）
-        |          可选 UuidCipher（AES 伪 UUID 版，密文为 36 位 UUID 格式；
+        |          当前默认 UuidCipher（AES 伪 UUID 版，密文为 36 位 UUID 格式；
         |          仅支持非负 int 主键；从 cipher_salt 派生 AES 密钥）
+        |          可选 CryptCipher（配置盐混淆版；盐为空会报错）
         | cipher_salt : 加解密盐（字符串），用于派生混淆字节流；必须有值，为空会抛异常
         */
         'encrypt' => env('ADMIN_ROUTE_ENCRYPT', false),
