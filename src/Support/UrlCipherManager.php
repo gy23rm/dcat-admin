@@ -24,7 +24,7 @@ use Dcat\Admin\Contracts\UrlCipher;
  * 用法：
  *   $manager = app('admin.cipher');
  *   $enc = $manager->encrypt(42, 'gi');             // 无 cipherScope → gi
- *   $enc = $manager->encrypt(42, 'gi');             // cipherScope='bo' → bo（覆盖为控制器标签）
+ *                                                    // cipherScope='bo' → bo（覆盖为控制器标签）
  *   $dec = $manager->decrypt($enc, 'bo');           // 解密必传 scope，需与加密时一致
  */
 class UrlCipherManager
@@ -58,7 +58,7 @@ class UrlCipherManager
      * 超长（如完整作用域 grid.id / book:grid.id）加密时会抛异常；CryptCipher 另按其规则。
      *
      * @param  int  $plain
-     * @param  string|null  $key  调用点作用域短标签（如 gi / fo），cipherScope 未配置时使用
+     * @param  string  $key  调用点作用域短标签（如 gi / fo），cipherScope 未配置时使用
      * @return string
      */
     public function encrypt(int $plain, string $key): string

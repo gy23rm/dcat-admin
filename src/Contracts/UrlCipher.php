@@ -6,9 +6,10 @@ namespace Dcat\Admin\Contracts;
  * URL 参数加解密接口.
  *
  * 包内所有路由参数的加密/解密都经由该接口完成。
- * 默认实现为 {@see \Dcat\Admin\Support\CryptCipher}
- * （配置盐混淆版；盐为空会抛异常），
- * 你也可以通过配置项 `admin.route.cipher` 指定自定义实现。
+ * 默认实现为 {@see \Dcat\Admin\Support\UuidCipher}
+ * （AES 伪 UUID 版：16 字节块 AES-256-ECB，PBKDF2 派生密钥，密文 36 位 UUID 样式；
+ * 仅支持正整数主键，范围 1 ~ 1099511627775（uint40）；作用域内嵌密文）。
+ * 你也可以通过配置项 `admin.route.cipher` 切换为 CryptCipher 等自定义实现。
  *
  * 注意：加密仅支持 int 主键。
  */

@@ -146,7 +146,7 @@ $plain = admin_cipher_decrypt($cipher, 'bo');
 // 参数：$cipher 密文；$key 作用域必填，需与加密时一致
 ```
 
-- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`；传空串 `` 可进入解密流程，但会因 scope 比对失败返回 `null`
+- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`；传空串 `''` 可进入解密流程，但会因 scope 比对失败返回 `null`
 - 传入的 `$key` 与密文内嵌 scope 不一致 → 返回 `null`（防跨场景重放）
 - 解密结果非正整数 → 返回 `null`
 - 页面访问走中间件：控制器配了 `cipherScope` 时用它校验（不匹配 → 404），未配置时自动提取标签解密
@@ -193,8 +193,8 @@ if ($id === null) {
 | 密文样式 | 36 位 UUID：`f5a24e32-xxxx-...` | `[gi]:a1b2c3...`（hex） |
 | 密钥派生 | AES-256 + PBKDF2（100k 迭代） | 配置盐 XOR 混淆（sha256 派生） |
 | 支持主键 | 正整数 1 ~ 1099511627775（uint40） | 非负 int（无长度上限） |
-| 作用域内嵌 | 2 字节字符串 key（查常量数组） | `[scope]:` 前缀 |
-| 完整性校验 | 第一字节必须为 1 + key 须在数组 | 无（靠前缀 + XOR 还原） |
+| 作用域内嵌 | 2 字节字符串标签（如 gi/fo/bo） | `[scope]:` 前缀 |
+| 完整性校验 | 第一字节必须为 0x02 + 标签与传入 scope 一致 | 前缀与传入 scope 一致（靠前缀 + XOR 还原） |
 | 适用场景 | 追求密文形式隐蔽、更安全 | 简单轻量、可读性略高 |
 
 切换实现只需改 `cipher` 配置（需要同时保证 `cipher_salt` 存在）：
@@ -307,10 +307,10 @@ $grid->column('sort')->orderable();
 
 ### 7.5 手动解密失败？
 
-`admin_cipher_decrypt` 要求传入与加密时**一致的 scope**。注意：**UuidCipher 已不强制
-校验作用域**（解密只还原主键，不比对 scope），因此传错 scope 不会返回 null。
-若你使用的是 `CryptCipher`（仍校验密文前缀 scope），则必须传与加密时完全一致的作用域
-（如 `bo`），否则返回 null——这通常是手动解密失败的常见原因。
+`admin_cipher_decrypt` 要求传入与加密时**一致的 scope**。**UuidCipher 和 CryptCipher 解密时
+都会校验 scope**：UuidCipher 读取内嵌的 2 字节标签与传入 `$key` 比对，不匹配返回 `null`；
+CryptCipher 比对密文 `[scope]:` 前缀，不匹配返回 `null`。因此传错 scope 会返回 `null`
+（防跨场景重放）——这是手动解密失败的常见原因。
 
 ---
 
@@ -318,8 +318,8 @@ $grid->column('sort')->orderable();
 
 ```
 src/Contracts/UrlCipher.php                 # 加解密接口契约
-src/Support/UrlCipherManager.php            # 统一入口（encrypt/decrypt/开关判断）
-src/Support/CryptCipher.php                 # 默认实现 B：配置盐混淆版
+src/Support/UrlCipherManager.php            # 统一入口（encrypt/decrypt/开关判断/expectedScope）
+src/Support/CryptCipher.php                 # 可选实现 B：配置盐混淆版
 src/Support/UuidCipher.php                  # 默认实现 A：AES 伪 UUID 版
 src/Http/Middleware/Cipher.php              # 中间件（解密路由主键）
 src/Http/Controllers/AdminController.php    # cipherScope getter

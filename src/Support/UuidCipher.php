@@ -49,7 +49,9 @@ use Dcat\Admin\Contracts\UrlCipher;
  * - AES-ECB 确定性：同一明文（同 scope）产出同一密文，可据此观察「哪些 URL 指向同一条
  *   记录」；对「隐藏主键 + 防枚举」足够，不是机密性/防重放方案；
  * - 本版本无独立完整性校验位：篡改检测依赖 AES 解密失败 + 魔数/作用域标签/范围粗校验；
- * - 中间件自动从密文提取标签并作为 scope 解密（peekScope）；对外手动解密必须传 scope;
+ * - 中间件解密优先用控制器 cipherScope（expectedScope）作为唯一可接受作用域，
+ *   标签不一致 → 解密失败 → 404；未配置 cipherScope 时才回退自动提取密文标签
+ *   （peekScope）解密；对外手动解密必须传 scope;
  * - 切换 cipher_salt 后旧链接无法解密（属预期）。
  *
  * 配置：admin.route.cipher 指定本类即可（当前默认）。
@@ -180,7 +182,7 @@ class UuidCipher implements UrlCipher
             return null;
         }
 
-        // 4. 主键范围校验：第 11-15 字节就是主键自身的 5 字节大端（uint40）
+        // 3. 主键范围校验：第 11-15 字节就是主键自身的 5 字节大端（uint40）
         //    读回后必须为正整数（> 0）
         $pkBytes = substr($decrypted, 11, 5);          // 最后 5 字节 = 主键 5B BE
         $byte = array_values(unpack('C*', $pkBytes));  // 5 个字节，各 8 位

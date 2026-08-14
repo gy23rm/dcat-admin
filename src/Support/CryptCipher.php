@@ -5,7 +5,7 @@ namespace Dcat\Admin\Support;
 use Dcat\Admin\Contracts\UrlCipher;
 
 /**
- * 极简 URL 主键加解密实现 - 方案A（配置 key 版）.
+ * 极简 URL 主键加解密实现（配置盐混淆版）.
  *
  * 密文结构：[scope]:<payload>
  *
@@ -17,6 +17,10 @@ use Dcat\Admin\Contracts\UrlCipher;
  * 派生密钥：sha256(cipher_salt . '|' . scope)
  *   - 同一 cipher_salt 下不同 scope 使用不同字节流，隔离使用场景；
  *   - 切换 cipher_salt 后，旧链接将无法解密（属预期）。
+ *
+ * 注意：本实现不设主键上限（非负 int 即可）；未做防篡改校验（无完整性位），
+ * 适合追求简单轻量的场景；默认实现是 {@see UuidCipher}，本类需在
+ * config('admin.route.cipher') 显式指定。
  */
 class CryptCipher implements UrlCipher
 {

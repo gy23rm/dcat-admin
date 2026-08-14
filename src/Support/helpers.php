@@ -279,7 +279,7 @@ if (! function_exists('admin_cipher_encrypt')) {
      *
      * 强校验：
      * - 仅接受正整数 int，0 / 负数一律抛异常（弱类型下字符串会先被 PHP 转 int 再进入）;
-     * - 作用域 $key 必填，缺省抛异常（防产出无 scope 的密文）.
+     * - 作用域 $key 必填（缺参/传 null 是 TypeError）；空串也会抛异常（防产出无 scope 的密文）.
      *
      * @param  int  $plain
      * @param  string  $key  作用域标识（如 grid.id / form.id），必填
@@ -311,6 +311,10 @@ if (! function_exists('admin_cipher_decrypt')) {
      * - UuidCipher / CryptCipher 解密时都会校验与密文内嵌 scope 一致，不一致返回 null
      *   （防跨场景重放）；页面访问走中间件，控制器配置 cipherScope 时以它为唯一可接受
      *   作用域，密文标签不一致 → 解密失败 → 404。
+     *
+     * 注：底层 cipher 只会返回纯数字字符串（如 '42'），+0 转 int 后 is_int 恒真；
+     * 若自定义 cipher 返回了非纯数字（如 '42abc'），PHP 弱类型 +0 会截断为 42，
+     * 这里一律按「非正整数」处理返回 null（不信任自定义返回）.
      *
      * @param  string  $cipher
      * @param  string  $key  作用域短标签（1~2 个可打印 ASCII 字符，如 gi / fo / bo），必填；需与加密时的 scope 一致
