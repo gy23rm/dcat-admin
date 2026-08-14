@@ -74,6 +74,30 @@ return [
         'middleware' => ['web', 'admin'],
 
         'enable_session_middleware' => false,
+
+        /*
+        |--------------------------------------------------------------------------
+        | 主键加密
+        |--------------------------------------------------------------------------
+        |
+        | 开启后，Grid/Form 生成的路径参数中的记录主键会被加密
+        | （如 /users/{id}/edit 中的 {id}），请求进入时由 admin.cipher
+        | 中间件自动解密，控制器拿到的永远是明文主键。
+        |
+        | 仅加密主键；其它查询参数（过滤条件等）保持明文，不做处理。
+        |
+        | encrypt: 是否启用
+        | cipher : 加解密实现类，必须实现 \Dcat\Admin\Contracts\UrlCipher
+        |          默认 CryptCipher（配置盐混淆版；盐为空会报错）
+        |          可选 UuidCipher（AES 伪 UUID 版，密文为 36 位 UUID 格式；
+        |          仅支持非负 int 主键；从 cipher_salt 派生 AES 密钥）
+        | cipher_salt : 加解密盐（字符串），用于派生混淆字节流；必须有值，为空会抛异常
+        */
+        'encrypt' => env('ADMIN_ROUTE_ENCRYPT', false),
+
+        'cipher' => \Dcat\Admin\Support\UuidCipher::class,
+
+        'cipher_salt' => env('ADMIN_ROUTE_CIPHER_SALT', 'dcat_c'),
     ],
 
     /*

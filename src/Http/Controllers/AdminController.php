@@ -44,6 +44,19 @@ class AdminController extends Controller
     }
 
     /**
+     * 获取 URL 主键加密的作用域标识（cipherScope 属性）.
+     *
+     * 子类可定义 protected $cipherScope 来指定该控制器生成 URL 时的身份前缀；
+     * 外部访问走此 getter（避免直接读 protected 属性触发 PHP 可见性错误）.
+     *
+     * @return string|null
+     */
+    public function cipherScope()
+    {
+        return empty($this->cipherScope) ? null : (string) $this->cipherScope;
+    }
+
+    /**
      * Get description for following 4 action pages.
      *
      * @return array
