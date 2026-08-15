@@ -64,6 +64,6 @@ abstract class Editable extends AbstractDisplayer
 
     protected function getUrl()
     {
-        return $this->url();
+        return $this->cipherUrl();
     }
 }

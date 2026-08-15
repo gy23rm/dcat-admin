@@ -141,7 +141,7 @@ abstract class AbstractDisplayer
      *
      * @return string
      */
-    public function url()
+    public function cipherUrl()
     {
         return $this->resource().'/'.$this->cipherKey();
     }
