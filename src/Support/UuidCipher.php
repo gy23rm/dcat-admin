@@ -12,11 +12,13 @@ use Dcat\Admin\Contracts\UrlCipher;
  * 字节布局（16 字节明文 = 一个 AES 块，无需填充）：
  *   ┌─────────┬───────────────┬───────────────┬────────────────┐
  *   │  魔数 1B │ 作用域标签 2B  │ 填充 8B        │ 主键 5B（大端）  │
- *   │  0x02   │ 短标签 ASCII  │ 0x00 全 0     │ uint40 BE      │
+ *   │ 可配置  │ 短标签 ASCII  │ 0x00 全 0     │ uint40 BE      │
  *   └─────────┴───────────────┴───────────────┴────────────────┘
  *   offset : 0              1..2           3..10          11..15
  *
- * ① 魔数固定 0x02：解密时第一字节必须等于 2，否则拒绝（防误伤明文/垃圾数据）；
+ * ① 魔数第一字节：默认 0x02，可通过 `admin.route.cipher_magic` 配置化
+ *    （详见 {@see UuidCipher::magic()}）；加解密共用同一值，
+ *    解密时第一字节必须等于配置的魔数，否则拒绝（防误伤明文/垃圾数据）；
  * ② 作用域标签（2 字节）：作用域本身必须是 1~2 个可打印 ASCII 字符的短标签
  *    （如 'gi' / 'fo' / 'bo'），整体写入第 2-3 字节（右补 \x00）。
  *    不再强制校验注册（不要求 SCOPES / cipher_scopes）——任何非空作用域都可加密；
@@ -27,7 +29,7 @@ use Dcat\Admin\Contracts\UrlCipher;
  * ④ 16 字节整体走 AES-256-ECB 加密（OPENSSL_ZERO_PADDING，数据恰好一块）；
  * ⑤ bin2hex 后按 8-4-4-4-12 拼成标准 UUID 字符串。
  *
- * 解密为逆过程：AES 解密 → 校验魔数 == 2 → 校验标签非空 → 还原主键。
+ * 解密为逆过程：AES 解密 → 校验魔数 == 配置值 → 校验标签非空 → 还原主键。
  * 任何一步失败/格式非法 → 返回 null（由调用方决定是否回退明文）。
  *
  * 作用域语义：标签不同则密文不同，防止跨场景 KV 重放（同一明文在不同 scope 下密文不同），
@@ -59,11 +61,6 @@ use Dcat\Admin\Contracts\UrlCipher;
 class UuidCipher implements UrlCipher
 {
     /**
-     * 明文布局魔数：第一个字节固定为 2.
-     */
-    protected const MAGIC = "\x02";
-
-    /**
      * 主键最大值：uint40（0xFFFFFFFFFF = 1099511627775）.
      */
     protected const MAX_PRIMARY_KEY = 0xFFFFFFFFFF;
@@ -86,8 +83,9 @@ class UuidCipher implements UrlCipher
     /**
      * {@inheritdoc}
      *
-     * @throws \InvalidArgumentException 主键非法 / scope 未注册
+     * @throws \InvalidArgumentException 主键非法 / 作用域超长或非可打印 ASCII
      * @throws \RuntimeException         cipher_salt 未配置或 AES 加密失败
+     * @throws \InvalidArgumentException admin.route.cipher_magic 配置非法
      */
     public function encrypt(int $plain, string $key): string
     {
@@ -103,7 +101,7 @@ class UuidCipher implements UrlCipher
 
         // 1. 拼 16 字节明文（一个 AES 块）
         $plaintext =
-            static::MAGIC                    // [0]    魔数 0x02
+            $this->magic()                     // [0]    魔数（默认 0x02，可配置）
             .str_pad($scopeLabel, 2, "\x00", STR_PAD_RIGHT) // [1..2] 作用域短标签（右补 0）
             ."\x00\x00\x00\x00\x00\x00\x00\x00"           // [3..10] 填充 8 字节
             .chr(($plain >> 32) & 0xFF)   // [11] 主键第 1 字节（最高）
@@ -137,7 +135,7 @@ class UuidCipher implements UrlCipher
      * - 作用域 $key **必填**（类型声明 `string`）：缺参 / 传 `null` → PHP `TypeError`；
      * - 长度非法 / 非 32 hex / 无连字符结构 → 视为非密文，返回 null（明文不误伤）；
      * - AES 解密失败 → 返回 null（篡改拒绝）；
-     * - 第一个字节必须为 2（魔数），否则返回 null；
+     * - 第一个字节必须为配置的魔数（默认 0x02），否则返回 null；
      * - 第 2-3 字节读出作用域标签，必须与传入的 $key 一致，否则返回 null；
      * - 主键必须为正整数（> 0），否则返回 null；
      * - 成功返回明文主键字符串。
@@ -169,8 +167,8 @@ class UuidCipher implements UrlCipher
             return null;
         }
 
-        // 1. 核心校验：第一个字节必须为 2（魔数）
-        if ($decrypted[0] !== static::MAGIC) {
+        // 1. 核心校验：第一个字节必须为配置的魔数（默认 0x02）
+        if ($decrypted[0] !== $this->magic()) {
             return null;
         }
 
@@ -230,7 +228,7 @@ class UuidCipher implements UrlCipher
      * 提取密文内嵌的作用域标签（供中间件/调用方在解密前确定正确 scope）.
      *
      * 与 decrypt 的区别：不校验传入 scope（其目的就是拿 scope），
-     * 只在密文合法时返回标签；格式非法 / AES 失败 / 魔数错 / 标签空 → 返回 null.
+     * 只在密文合法时返回标签；格式非法 / AES 失败 / 魔数错（非配置值） / 标签空 → 返回 null.
      *
      * @param  string  $cipher
      * @return string|null  密文内嵌的 1~2 字符标签；非法密文返回 null
@@ -255,7 +253,7 @@ class UuidCipher implements UrlCipher
 
         $decrypted = openssl_decrypt($cipherRaw, 'aes-256-ecb', $this->secret(), OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING);
 
-        if ($decrypted === false || strlen($decrypted) !== 16 || $decrypted[0] !== static::MAGIC) {
+        if ($decrypted === false || strlen($decrypted) !== 16 || $decrypted[0] !== $this->magic()) {
             return null;
         }
 
@@ -266,6 +264,68 @@ class UuidCipher implements UrlCipher
         }
 
         return $scopeLabel;
+    }
+
+    /**
+     * @var string|null 解析后的魔数单字节（首次使用时缓存）
+     */
+    protected ?string $magicKey = null;
+
+    /**
+     * 解析配置的魔数并缓存（默认 0x02）.
+     *
+     * 取值 `admin.route.cipher_magic`，支持以下写法（最终归一为单字节字符串）：
+     * - `"\x02"`（PHP 转义字符串，默认写法，作为字面单字节直接使用）
+     * - `2`（int 十进制）、`0x02`（int 十六进制）
+     * - `'0x02'` / `'2'`（多字节数字字符串：0x 前缀按十六进制，否则十进制）
+     * - `"\x01"` 等任意单字节转义字符串（字面使用）
+     *
+     * 加解密两侧共用该方法读取同一个魔数：加密写入、解密/peekScope 校验。
+     *
+     * 注意：魔数参与解密校验，改动配置会让旧密文全部无法解密（与新 salt 同理），
+     * 如无必要请保持默认 `"\x02"`。
+     *
+     * @return string 单字节魔数
+     *
+     * @throws \InvalidArgumentException 配置值无法归一为单个字节（0 ~ 255）时
+     */
+    protected function magic(): string
+    {
+        if ($this->magicKey !== null) {
+            return $this->magicKey;
+        }
+
+        $value = config('admin.route.cipher_magic', "\x02");
+
+        if (is_string($value) && strlen($value) === 1) {
+            // 单字节字符串（如 "\x02" / 'a'）：当作字面字节直接使用
+            $this->magicKey = $value;
+
+            return $this->magicKey;
+        }
+
+        if (is_int($value)) {
+            $num = $value;
+        } elseif (is_string($value)) {
+            $str = trim($value);
+            if (preg_match('/^0x[0-9a-fA-F]+$/', $str)) {
+                $num = hexdec(substr($str, 2));
+            } elseif (preg_match('/^-?\d+$/', $str)) {
+                $num = (int) $str;
+            } else {
+                throw new \InvalidArgumentException('admin.route.cipher_magic 无法解析：传入了「'.var_export($value, true).'」（支持 int / 0x 十六进制 / 单字节字符串）');
+            }
+        } else {
+            throw new \InvalidArgumentException('admin.route.cipher_magic 必须是 int 或字符串，传入了：'.gettype($value));
+        }
+
+        if ($num < 0 || $num > 255) {
+            throw new \InvalidArgumentException('admin.route.cipher_magic 必须在 0 ~ 255 之间（单字节），传入了：'.var_export($value, true));
+        }
+
+        $this->magicKey = chr($num);
+
+        return $this->magicKey;
     }
 
     /**
