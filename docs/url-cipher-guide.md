@@ -22,6 +22,9 @@ ADMIN_ROUTE_CIPHER_SALT=111
 
 > **注意**：`ADMIN_ROUTE_CIPHER_SALT` 必填且不能为空，否则加解密会抛异常。
 > 修改盐之前生成的密文将在修改后无法解密，请勿随意变更。
+>
+> 魔数 `cipher_magic` 为可选（默认 `\x02`，一般无需配置），
+> 同样参与解密校验，改动会让旧密文失效，详见 [§5 配置项详解](#5-配置项详解)。
 
 启用后 `php artisan config:clear` 刷新配置缓存。
 
@@ -70,9 +73,10 @@ ADMIN_ROUTE_CIPHER_SALT=111
 `UuidCipher` 把**作用域短标签本身**（1~2 个可打印 ASCII 字符）写入密文第 2-3 字节
 （右补 `\x00`）。**作用域必须是 1~2 个可打印 ASCII 字符**（如 `gi`/`fo`/`bo`），
 超长（如 `grid.id`、`book:grid.id`）或中文会直接抛异常，不会静默截断：
-**不再强制校验作用域注册**：任意非空作用域都可加密；解密时读出 2 字节标签，
+**不再强制校验作用域注册**：只要符合长度/字符集约束即可加密；解密时读出 2 字节标签，
 必须与传入的 scope 一致（不匹配返回 null，防跨场景重放）——不再校验是否
 在某个作用域数组（即不要求注册），但**标签比对是必须的**。
+> CryptCipher 无 1~2 字节限制（`[scope]:` 前缀可任意长度），但仍需与加密时一致。
 
 内置约定（仅供参考，不强制）：
 
@@ -137,6 +141,7 @@ $cipher = admin_cipher_encrypt(42, 'bo');
 
 - 非正整数（`0` / `负数` / 非数字）→ 抛 `InvalidArgumentException`
 - `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`（不满足类型即被引擎拦截，不进入业务逻辑）
+- 传空串 `''` → 抛 `InvalidArgumentException`（防产出无 scope 的密文）
 
 ### 4.2 解密
 
@@ -146,7 +151,7 @@ $plain = admin_cipher_decrypt($cipher, 'bo');
 // 参数：$cipher 密文；$key 作用域必填，需与加密时一致
 ```
 
-- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`；传空串 `''` 可进入解密流程，但会因 scope 比对失败返回 `null`
+- `$key` 通过类型声明 `string` 强制必填：缺参 / 传 `null` → PHP `TypeError`；传空串 `''` → 抛 `InvalidArgumentException`（不进入解密流程）
 - 传入的 `$key` 与密文内嵌 scope 不一致 → 返回 `null`（防跨场景重放）
 - 解密结果非正整数 → 返回 `null`
 - 页面访问走中间件：控制器配了 `cipherScope` 时用它校验（不匹配 → 404），未配置时自动提取标签解密
@@ -186,7 +191,8 @@ if ($id === null) {
 
     // UuidCipher 明文块第一字节魔数（默认 "\x02"）
     // 支持：int（如 2）/ "0x02" / "\x02" 单字节字符串，最终归一为单字节。
-    // 注意：魔数参与解密校验，改动后旧密文将无法解密（与新 salt 同理），如无必要请保持默认。
+    // 注意：此键不读 env()，只能在这里改 PHP 字面量；魔数参与解密校验，
+    // 改动后旧密文将无法解密（与新 salt 同理），如无必要请保持默认。
     'cipher_magic' => "\x02",
 ],
 ```
@@ -253,14 +259,17 @@ class MyCipher implements UrlCipher
 {
     public function encrypt(int $plain, string $key): string
     {
-        // 返回 URL 安全字符集的密文
-        return base64_encode("{$plain}|{$key}");
+        // 返回 URL 安全字符集的密文（必须避免 / + = 等路径特殊字符）
+        return rtrim(strtr(base64_encode("{$plain}|{$key}"), '+/', '-_'), '=');
     }
 
     public function decrypt(string $cipher, string $key): ?string
     {
-        $raw = base64_decode($cipher, true);
-        [$plain, $scope] = explode('|', $raw);
+        $raw = base64_decode(strtr($cipher, '-_', '+/'), true);
+        if ($raw === false) {
+            return null;   // 非法 base64 → 非本实现密文
+        }
+        [$plain, $scope] = array_pad(explode('|', $raw, 2), 2, '');
         if ($key !== $scope) {
             return null;   // scope 不匹配拒绝
         }
@@ -289,7 +298,7 @@ public function decrypt(string $cipher, string $key): ?string;
 ### 7.1 页面 URL 还是明文？
 
 确认 `.env` 里 `ADMIN_ROUTE_ENCRYPT=true` 且执行了 `php artisan config:clear`。
-默认值是 `false`（`.env.example` 里也是 `false`），不改就完全不加密。
+默认值是 `false`，不改就完全不加密（未显式配置时走 `config/admin.php` 的默认值）。
 
 ### 7.2 改了 salt 后所有链接打不开了？
 
@@ -318,6 +327,12 @@ $grid->column('sort')->orderable();
 CryptCipher 比对密文 `[scope]:` 前缀，不匹配返回 `null`。因此传错 scope 会返回 `null`
 （防跨场景重放）——这是手动解密失败的常见原因。
 
+### 7.6 改了 cipher_magic 后所有链接打不开了？
+
+同样会。`cipher_magic` 参与解密校验（第一字节必须等于配置值），改动后旧密文第一字节
+与新的魔数不匹配 → 解密失败。**cipher_magic 和 salt 一样，定下来就别改**；
+它没有 `env()` 包裹，只能改 `config/admin.php` 里的 PHP 字面量。
+
 ---
 
 ## 8. 文件清单（涉及本次功能）
@@ -326,12 +341,13 @@ CryptCipher 比对密文 `[scope]:` 前缀，不匹配返回 `null`。因此传�
 src/Contracts/UrlCipher.php                 # 加解密接口契约
 src/Support/UrlCipherManager.php            # 统一入口（encrypt/decrypt/开关判断/expectedScope）
 src/Support/CryptCipher.php                 # 可选实现 B：配置盐混淆版
-src/Support/UuidCipher.php                  # 默认实现 A：AES 伪 UUID 版
+src/Support/UuidCipher.php                  # 默认实现 A：AES 伪 UUID 版（cipher_magic 配置化）
 src/Http/Middleware/Cipher.php              # 中间件（解密路由主键）
 src/Http/Controllers/AdminController.php    # cipherScope getter
 src/Support/helpers.php                     # admin_cipher_encrypt / admin_cipher_decrypt
+config/admin.php                            # 配置项（encrypt / cipher / cipher_salt / cipher_magic / cipher_scopes）
 ```
 
 ---
 
-*文档版本：2026-08-14，对应 `UuidCipher` 默认实现。*
+*文档版本：2026-08-15，对应 `UuidCipher` 默认实现。*
