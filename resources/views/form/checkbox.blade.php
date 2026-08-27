@@ -1,6 +1,6 @@
 <div class="{{$viewClass['form-group']}}" >
 
-    <label class="{{$viewClass['label']}} control-label pt-0">{!! $label !!}</label>
+    <label class="{{$viewClass['label']}} control-label" style="padding-top: 5px;">{!! $label !!}</label>
 
     <div class="{{$viewClass['field']}}">
 
