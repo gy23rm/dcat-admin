@@ -75,6 +75,15 @@ php artisan admin:install
 
 - [URL 主键加密功能使用说明](docs/url-cipher-guide.md)
 
+## 扩展包
+
+| 扩展 | 描述 | dcat-admin 版本 |
+| --- | --- |---------------|
+| [zgy-dcat/wangeditor](https://github.com/gy23rm/dcat-wangeditor) | wangEditor 5 富文本编辑器表单字段 | dev-master    |
+| [zgy-dcat/distpicker](https://github.com/gy23rm/dcat-distpicker) | 省市区三级联动（super-eggs/dcat-distpicker 的维护 fork） |dev-master           |
+
+安装：`composer require zgy-dcat/wangeditor` / `composer require zgy-dcat/distpicker`
+
 ## 免责声明
 
 本项目已通过测试并在实际生产环境中使用，但无法保证所有修改绝对无误，上线前请充分测试。
